@@ -4,15 +4,46 @@ import { createStackNavigator } from '@react-navigation/stack';
 import React from 'react';
 import type {PropsWithChildren} from 'react';
 
+
+// FIREBASE (DATABASE)
+
+// install firebase to root of project directory, $ npm install firebase
+
+import { initializeApp } from "firebase/app";
+import { getDatabase, ref, set } from "firebase/database";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBA3SGfDTI94WaJOxp_q0C2r3ypG6UCyj4",
+  authDomain: "cycle-savvy.firebaseapp.com",
+  databaseURL: "https://cycle-savvy-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "cycle-savvy",
+  storageBucket: "cycle-savvy.appspot.com",
+  messagingSenderId: "537001875593",
+  appId: "1:537001875593:web:0d10ab8433ce7fb8e40e58",
+  measurementId: "G-3WGYQ5T50W"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+
+export function writeUserData(mobile, password) {
+  const db = getDatabase();
+  const reference = ref(db, 'users/' + mobile);
+  set(reference, {
+    password: password
+  });
+}
+
+
 //Component Forms
-import Login from './LoginForm/Login'
-import ResetPw from './ResetPwForm/ResetPw';
-import Verification from './VerificationForm/Verification';
-import RegisterUser from './RegisterUserForm/RegisterUser';
-import Addresses from './AddressesForm/Addresses';
-import FAQ from './FAQForm/FAQ';
-import PrivacyConcerns from './PrivacyForm/PrivacyConcerns';
-import Map from './MapForm/Map';
+import Login from './Components/LoginForm/Login'
+import ResetPw from './Components/ResetPwForm/ResetPw';
+import Verification from './Components/VerificationForm/Verification';
+import RegisterUser from './Components/RegisterUserForm/RegisterUser';
+import Addresses from './Components/AddressesForm/Addresses';
+import FAQ from './Components/FAQForm/FAQ';
+import PrivacyConcerns from './Components/PrivacyForm/PrivacyConcerns';
+import Map from './Components/MapForm/Map';
 
 const Stack = createStackNavigator();
 

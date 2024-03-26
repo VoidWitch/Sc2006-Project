@@ -2,6 +2,19 @@ import { StackNavigationProp } from '@react-navigation/stack/lib/typescript/src/
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 
+import { writeUserData } from '../../App';
+
+// import { textflow } from 'textflow.js/textflow';
+
+// import { sendSMS } from '../../node_modules/textflow.js/textflow';
+// import { SendDirectSms } from 'react-native-send-direct-sms';
+/*
+function sendSmsData(mobileNumber, bodySMS) { // REFERENCE: https://github.com/Kajanan02/react-native-send-direct-sms?tab=readme-ov-file
+  SendDirectSms(mobileNumber, bodySMS)
+    .then((res) => console.log("then", res))
+    .catch((err) => console.log("catch", err))
+}*/
+
 type RootStackParamList = {
     'Verification': undefined;	    //press register pw -> go to verification screen
 };
@@ -18,9 +31,31 @@ const RegisterUserScreen = ({navigation}:Props) => {
     const [confirmPw, setConfirmPw] = useState(''); 
     
     const registerUser = () => { 
+
+        writeUserData(mobile, password); // Write user data to Firebase database
+
+        // textflow.sendSMS("+65" + mobile, "Dummy message text...");
+
+        // TWILIO: VCNRA9CVPYYBQV75PMWSBR76
+
+        // sendSmsData("+65" + mobile, "hello");
+
+        // OTP Verification
+        // User has sent his phone number for verification
+        // textflow.sendVerificationSMS("+11234567890", verificationOptions);
+
+        // Show him the code submission form
+        // We will handle the verification code ourselves
+
+        // The user has submitted the code
+        // let result = await textflow.verifyCode("+11234567890", "USER_ENTERED_CODE"); 
+        // if result.valid is true, then the phone number is verified. 
+
+
         // Implement registration logic here 
         // update user info into database
         // if valid format, call handleRegistered to navigate back to login screen to re-login
+
         //if (condition)
         handleRegistered();      
     }; 
