@@ -32,7 +32,14 @@ const PhoneVerificationScreen = ({navigation}:Props) => {
         //get user input and check against OTP generated
         // if verification failed -> handleResendCode(), prompt wrong input
         // else -> navigate to mainUI screen
-        handleVerified();
+
+        // handleVerified();
+
+        // const [answer, setAnswer] = useState(''); 
+
+        // writeUserAnswer(mobile, answer);
+
+        navigation.reset({ index: 7, routes: [{ name: 'Cycle Savvy' }] })
     };
 
     const handleVerified = () => {
@@ -58,24 +65,25 @@ const PhoneVerificationScreen = ({navigation}:Props) => {
         behavior={Platform.OS === "ios" ? "padding" : "height"} 
         keyboardVerticalOffset={Platform.OS === "ios" ? 100 : 100} 
         > 
+        
         <ScrollView contentContainerStyle={{ flexGrow: 1 }}> 
             <View style={styles.container}> 
             <View style={styles.container1}> 
-				<Text style={styles.header}>Just making sure it's you...</Text> 
+				<Text style={styles.header}>Security Question</Text> 
 			</View>
-            <Text style={styles.instruction}>Please verify your account</Text>  
-            <Text style={styles.description}>Please enter the verification code sent to your phone.</Text> 
+            <Text style={styles.instruction}>What is your favourite colour?</Text>  
+            <Text style={styles.description}>Please answer the question above.</Text>
             <TextInput 
                 style={styles.input} 
-                placeholder="Verification Code" 
+                placeholder="Answer" 
                 placeholderTextColor="#808080" 
-                keyboardType="number-pad" 
+                
                 onChangeText={setCode} 
                 value={code} 
                 maxLength={6} 
             /> 
             <TouchableOpacity style={styles.button} onPress={verifyCode}> 
-                <Text style={styles.buttonText}>Verify</Text> 
+                <Text style={styles.buttonText}>Submit</Text> 
             </TouchableOpacity> 
             <Text style={styles.timerText}>{`Time remaining: ${timer} seconds`}</Text> 
             {timer === 0 && ( 
