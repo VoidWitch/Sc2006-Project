@@ -1,3 +1,5 @@
+//  AIzaSyDlRXMUhwmnCmDXpntaFkL66-vI6cMxWrY   -- Google Maps API key
+
 import 'react-native-gesture-handler';    //navigation stack, include at top
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
