@@ -16,7 +16,6 @@ const FAQItem: React.FC<{ question: string; answer: string }> = ({ question, ans
         </View>
     );
 };
-  
 
 const faqData = [
     {
@@ -25,14 +24,14 @@ const faqData = [
     },
     {
         question: 'How can I contact customer support?',
-        answer: 'Customer support can be reached via email at support@CycleSaavy.com or by phone at 9060 8359.',
+        answer: 'Customer support can be reached via email at support@CycleSavvy.com or by phone at 9060 8359.',
     },
     {
         question: 'How do I report a problem or bug?',
-        answer: 'If you encounter a problem or bug, please report it via our support email at bugs@CycleSaavy.com. Include as much details as possible to help us resolve the issue quickly.',
+        answer: 'If you encounter a problem or bug, please report it via our support email at bugs@CycleSavvy.com. Include as much details as possible to help us resolve the issue quickly.',
     },
     {
-        question: 'How does CycleSaavy keep the parking lots updated?',
+        question: 'How does CycleSavvy keep the parking lots updated?',
         answer: "We respond promptly to users' feedback, ensuring that there are sufficient parking lots for users to park at.",
     },
     {
@@ -41,7 +40,7 @@ const faqData = [
     },
     {
         question: "How do I provide a different starting location?",
-        answer: "Searching in preparation for your next trip? Fret not, CycleSaavy allows you to provide a different starting point when you provide the postal code.",
+        answer: "Searching in preparation for your next trip? Fret not, CycleSavvy allows you to provide a different starting point when you provide the postal code.",
     }
     // Add more FAQ items here
 ];
@@ -75,7 +74,7 @@ const styles = StyleSheet.create({
     },
     headerBar: {
         backgroundColor: '#48c289',
-        paddingTop: 40,
+        paddingTop: 20,
         paddingBottom: 20,
         alignItems: 'center',
     },
