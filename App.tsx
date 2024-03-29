@@ -1,3 +1,5 @@
+//  AIzaSyDlRXMUhwmnCmDXpntaFkL66-vI6cMxWrY   -- Google Maps API key
+
 import 'react-native-gesture-handler';    //navigation stack, include at top
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
@@ -26,7 +28,7 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
-export function writeUserData(mobile, password) {
+export function writeUserData(mobile: string, password: string) {
   const db = getDatabase();
   const reference = ref(db, 'users/' + mobile);
   set(reference, {
@@ -36,14 +38,15 @@ export function writeUserData(mobile, password) {
 
 
 //Component Forms
-import Login from './Components/LoginForm/Login'
-import ResetPw from './Components/ResetPwForm/ResetPw';
-import Verification from './Components/VerificationForm/Verification';
-import RegisterUser from './Components/RegisterUserForm/RegisterUser';
-import Addresses from './Components/AddressesForm/Addresses';
-import FAQ from './Components/FAQForm/FAQ';
-import PrivacyConcerns from './Components/PrivacyForm/PrivacyConcerns';
-import Map from './Components/MapForm/Map';
+import Login from './LoginForm/Login'
+import ResetPw from './ResetPwForm/ResetPw';
+import Verification from './VerificationForm/Verification';
+import RegisterUser from './RegisterUserForm/RegisterUser';
+import Addresses from './AddressesForm/Addresses';
+import FAQ from './FAQForm/FAQ';
+import PrivacyConcerns from './PrivacyForm/PrivacyConcerns';
+import Map from './MapForm/Map';
+import ChangePw from './ChangePwForm/ChangePw';
 
 const Stack = createStackNavigator();
 
@@ -63,6 +66,7 @@ function App(): React.JSX.Element {
             <Stack.Screen name="Saved Addresses" component={Addresses} />
             <Stack.Screen name="FAQ" component={FAQ} />
             <Stack.Screen name="Privacy Concerns" component={PrivacyConcerns} />
+            <Stack.Screen name="Change Password" component={ChangePw} />
             <Stack.Screen name="Cycle Savvy" component={Map} options={{ headerShown: false }} />
             </Stack.Navigator>
         </NavigationContainer>
@@ -70,4 +74,3 @@ function App(): React.JSX.Element {
 }
 
 export default App;
-

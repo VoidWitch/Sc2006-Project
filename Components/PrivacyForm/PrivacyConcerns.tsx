@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, ScrollView, Text, TouchableOpacity, StyleSheet } from 'react-native';
 
 type PrivacyFAQItemProps = {
 	question: string;
@@ -50,11 +50,11 @@ const privacyFaqData = [
 
 const PrivacyConcernsFAQ = () => {
 	return (
-		<View style={styles.container}>
+		<ScrollView style={styles.container}>
 			{privacyFaqData.map((faq, index) => (
 				<PrivacyFAQItem key={index} question={faq.question} answer={faq.answer} />
 			))}
-		</View>
+		</ScrollView>
 	);
 };
 
@@ -86,3 +86,4 @@ const styles = StyleSheet.create({
 });
 
 export default PrivacyConcernsFAQ;
+
