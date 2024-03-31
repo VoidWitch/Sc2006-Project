@@ -16,7 +16,7 @@ type RootStackParamList = {
 type ScreenNavigationProp = StackNavigationProp<RootStackParamList>;
   
 interface Props {
-	navigation: ScreenNavigationProp;
+    navigation: ScreenNavigationProp;
 }
 
 const Map = ({navigation}:Props) => {
@@ -35,12 +35,14 @@ const Map = ({navigation}:Props) => {
     const handleToggleSidePanel = () => {
         setShowSidePanel(!showSidePanel);
     };
-
     const handleCloseSidePanel = () => {
         setShowSidePanel(false);
     };
 
+    const [shelterFilter, setShelterFilter] = useState(false);  // no shelter default
     const [markerVisible, setMarkerVisible] = useState(false);
+    const [filterDropdownVisible, setFilterDropdownVisible] = useState(false);
+    const [selectedFilter, setSelectedFilter] = useState(5); // Default filter option
 
     useEffect(() => {
         setMarkerVisible(false); // Marker not visible when component mounts since not user location
@@ -126,9 +128,17 @@ const Map = ({navigation}:Props) => {
         // Get user input location -> convert to coordinates and compare with bicycle lots
     };
 
-    const filterSearch = () => {
-        // Implementation logic for filter
-        // Get user input and then filter for number of lots to search then display
+    const filterSearch = (value: number) => {
+        setFilterDropdownVisible(false);
+        setSelectedFilter(value);
+    };
+
+    const toggleFilterDropdown = () => {
+        setFilterDropdownVisible(!filterDropdownVisible);
+    };
+
+    const handleShelterFilter = () => {
+        setShelterFilter(!shelterFilter);
     };
 
     const displayLots = () => {
@@ -143,19 +153,19 @@ const Map = ({navigation}:Props) => {
 
     const handleFAQ = () => {
         navigation.navigate('FAQ');
-    }
+    };
 
     const handlePrivacyConcerns = () => {
         navigation.navigate('Privacy Concerns');
-    }
+    };
 
     const handleChangePW = () => {
         navigation.navigate('Change Password');
-    }
+    };
 
     const handleLogout = () => {
         navigation.replace('Login');
-    }
+    };
 
     return (
         <View style={styles.container}>
@@ -178,16 +188,39 @@ const Map = ({navigation}:Props) => {
                     style={styles.searchBar}
                     placeholder="Search location" />
 
-                {/* Need to implement dropdown for filter */}
-                <TouchableOpacity style={styles.filterButton} onPress={filterSearch}>
+                <TouchableOpacity style={styles.filterButton} onPress={toggleFilterDropdown}>
                     <Image source={require('./FilterLogo.png')} style={styles.filterIcon} resizeMode="contain" />
                 </TouchableOpacity>
 
+                {filterDropdownVisible && (
+                    <View style={styles.dropdownContainer}>
+                        <View style={styles.checkboxContainer}>
+                            <TouchableOpacity style={styles.checkbox} onPress={handleShelterFilter}>
+                                <Text style={styles.checkboxText}>Shelter</Text>
+                                <View style={[styles.checkboxBox, shelterFilter && styles.checkedBox]} />
+                            </TouchableOpacity>
+                        </View>
+
+                        <Text style={styles.dropdownHeader}>Number of lots displayed</Text>
+                        <TouchableOpacity style={styles.dropdownOption} onPress={() => filterSearch(5)}>
+                            <Text style={styles.dropdownText}>5 (Default)</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity style={styles.dropdownOption} onPress={() => filterSearch(10)}>
+                            <Text style={styles.dropdownText}>10</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity style={styles.dropdownOption} onPress={() => filterSearch(15)}>
+                            <Text style={styles.dropdownText}>15</Text>
+                        </TouchableOpacity>
+                    </View>
+                )}
+
+                {/* Search Button */}
                 <TouchableOpacity style={styles.searchButton} onPress={handleSearch}>
                     <Image source={require('./SearchLogo.png')} style={styles.searchIcon} resizeMode="contain" />
                 </TouchableOpacity>
             </View>
 
+            {/* GPS and Side Panel Buttons */}
             <View style={styles.DrawerAndGPSContainer}>
                 <TouchableOpacity style={styles.GPSButton} onPress={handleGPSpress}>
                     <Image source={require('./gpsLogo.png')} style={styles.GPSIcon} resizeMode="contain" />
@@ -197,6 +230,7 @@ const Map = ({navigation}:Props) => {
                 </TouchableOpacity>
             </View>
 
+            {/* Side Panel */}
             {showSidePanel && (
                 <>
                     <TouchableOpacity style={styles.overlay} onPress={handleCloseSidePanel} />
@@ -256,15 +290,60 @@ const styles = StyleSheet.create({
         borderRadius: 100,
         backgroundColor: 'transparent',
     },
-    searchButton: {
-        padding: 10,
-        borderRadius: 100,
-        backgroundColor: 'transparent',
-    },
     filterIcon: {
         width: 20,
         height: 20,
         tintColor: '#000',
+    },
+    dropdownContainer: {
+        position: 'absolute',
+        top: 50,
+        right: 10,
+        backgroundColor: '#fff',
+        borderRadius: 5,
+        elevation: 3,
+        zIndex: 1,
+    },
+    dropdownOption: {
+        paddingVertical: 10,
+        paddingHorizontal: 20,
+    },
+    dropdownHeader: {
+        padding: 10,
+        alignSelf: 'center',
+        fontSize: 14,
+    },
+    dropdownText: {
+        fontSize: 14,
+        alignSelf: 'center',
+    },
+    checkboxContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        padding: 10,
+    },
+    checkbox: {
+        flexDirection: 'row',
+    },
+    checkboxText: {
+        left: 20,
+        fontSize: 14,
+    },
+    checkboxBox: {
+        width: 20,
+        height: 20,
+        borderWidth: 1,
+        borderColor: '#000',
+        borderRadius: 3,
+        left: 60
+    },
+    checkedBox: {
+        backgroundColor: '#000',
+    },
+    searchButton: {
+        padding: 10,
+        borderRadius: 100,
+        backgroundColor: 'transparent',
     },
     searchIcon: {
         width: 20,
@@ -396,3 +475,5 @@ const styles = StyleSheet.create({
 });
 
 export default Map;
+export let selectedFilter = '5';        //or export const selectedFilter = undefined
+export let shelterFilter = 'false';
