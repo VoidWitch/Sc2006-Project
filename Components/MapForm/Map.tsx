@@ -22,6 +22,7 @@ interface Props {
 const Map = ({navigation}:Props) => {
     const [showSidePanel, setShowSidePanel] = useState(false);
     const [location, setLocation] = useState<Region | null>(null); // Updated user location state
+    const [region, setRegion] = useState<Region | null>(null); // map display region
     const initialRegion: Region = {
         latitude: 1.3521,
         longitude: 103.8198,
@@ -52,13 +53,13 @@ const Map = ({navigation}:Props) => {
         if (!followUserLocation) {
             requestPermissions();
         } else {
-            setFollowUserLocation(true); // Center the map on the user's location
+            startLocationUpdates(); // get current location and center the map on user's location
+            setRegion(location);
         }
     }
 
     const handleMapPress = () => {
-        setMarkerVisible(false);
-        setFollowUserLocation(false);
+        setFollowUserLocation(false);   //map not centred on user's location
     }
 
     const requestPermissions = async () => {
@@ -101,6 +102,7 @@ const Map = ({navigation}:Props) => {
     };
 
     const getCurrentLocation = () => {
+        setFollowUserLocation(true); // Center the map on the user's location
         Geolocation.getCurrentPosition(
             (position: { coords: { latitude: any; longitude: any; }; }) => {
                 setLocation({
@@ -109,9 +111,6 @@ const Map = ({navigation}:Props) => {
                     latitudeDelta: 0.005,
                     longitudeDelta: 0.005,
                 });
-                if (followUserLocation) {
-                    setFollowUserLocation(true); // Center the map on the user's location
-                }
                 setMarkerVisible(true);
             },
             (error: any) => {
@@ -162,11 +161,11 @@ const Map = ({navigation}:Props) => {
         <View style={styles.container}>
             <MapView
                 style={styles.map}
-                region={location ? location : initialRegion} // Update map region to user location else initial render
-                onRegionChange={handleMapPress} // Marker invisible when scrolling
+                region={region ? region : initialRegion} // Update map region to user location else initial render
+                onRegionChange={handleMapPress}
                 onRegionChangeComplete={newRegion => {
                     if (!followUserLocation) {
-                        setLocation(newRegion);
+                        setRegion(newRegion);
                     }
                 }}
                 followsUserLocation={followUserLocation} // Center the map on user's location if needed
