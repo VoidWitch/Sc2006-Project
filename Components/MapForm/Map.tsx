@@ -144,8 +144,14 @@ const Map = ({navigation}:Props) => {
     const displayLots = () => {
         // Implementation logic for display
         // After retrieving nearest 5, display on gmaps
-    };
-
+        try {
+                const nearestParkingLots = await handleSearch();
+                setNearestParkingLots(nearestParkingLots);
+            } catch (error) {
+                Alert.alert('Error', 'Failed to fetch nearest parking lots');
+                console.error('Error fetching nearest parking lots:', error);
+            };
+    
     const seeMoreLots = () => {
         // Implementation logic to get next 5 lots
         // Call display lots function to display them
