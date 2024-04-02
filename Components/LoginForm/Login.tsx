@@ -2,6 +2,30 @@ import { StackNavigationProp } from '@react-navigation/stack/lib/typescript/src/
 import React, { useState } from 'react'; 
 import { View, Text, TouchableOpacity, StyleSheet, Image, KeyboardAvoidingView, Platform, ScrollView, TextInput } from 'react-native'; 
 
+import { initializeApp } from "firebase/app";
+import { getDatabase, ref, set, get, push, update, child } from "firebase/database";
+
+import Toast from 'react-native-toast-message';
+
+import loginVal from '../../App';
+import regMobile from '../RegisterUserForm/RegisterUser'
+import regPassword from '../RegisterUserForm/RegisterUser'
+import regAnswer from '../RegisterUserForm/RegisterUser'
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBA3SGfDTI94WaJOxp_q0C2r3ypG6UCyj4",
+  authDomain: "cycle-savvy.firebaseapp.com",
+  databaseURL: "https://cycle-savvy-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "cycle-savvy",
+  storageBucket: "cycle-savvy.appspot.com",
+  messagingSenderId: "537001875593",
+  appId: "1:537001875593:web:0d10ab8433ce7fb8e40e58",
+  measurementId: "G-3WGYQ5T50W"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+
 type RootStackParamList = {
 	// Add other screens if needed
 	'Reset Password': undefined;	//press reset pw -> go to reset pw screen
@@ -18,11 +42,93 @@ interface Props {
 const LoginScreen = ({navigation}:Props) => { 
 	const [mobile, setMobile] = useState(''); 
 	const [password, setPassword] = useState(''); 
+
+	const [inputPassword, setText] = useState(''); 
+
+	var userExist = null;
+	var userProp = {};
+
+	const getUserMobile = (mobile: string) => {
+        const dbRef = ref(getDatabase());
+        get(child(dbRef, `users/${mobile}`)).then((snapshot) => {
+          if (snapshot.exists()) {
+            userExist = true;
+          } else {
+            userExist = false;
+          }
+        });
+      }
+
+	const getUserPassword = (mobile: string) => {
+		const dbRef = ref(getDatabase());
+		get(child(dbRef, `users/${mobile}`)).then((snapshot) => {
+			if (snapshot.exists()) {
+				userProp = snapshot.val();
+				// console.log(userProp.password);
+			}
+		});
+	}
 	
 	const handleLogin = () => { 
-		//implement login logic then navigation to verification UI
-		console.log('Verifying user...');
-		navigation.replace('Verification');
+
+		// console.log(global.loginVal);
+
+		global.loginVal = true;
+
+		getUserMobile(mobile);
+
+        setTimeout(function() {
+
+            if (userExist === false) {
+
+                // show error
+                const showToast = () => { // show a toast message (android)
+                    Toast.show({
+                    type: 'error',
+                    text1: 'No account found.',
+                    text1Style: {
+                        fontSize:15
+                    }
+                    });
+                }
+
+                showToast();
+
+            } else {
+
+				// check that password is correct, then proceed
+
+				getUserPassword(mobile);
+
+				// console.log(inputPassword);
+
+				setTimeout(function() {
+					if (userProp.password === inputPassword) {
+
+						global.regMobile = mobile;
+						global.regPassword = password;
+
+						//implement login logic then navigation to verification UI
+						console.log('Verifying user...');
+						navigation.replace('Verification');
+					} else {
+						const showToast = () => { // show a toast message (android)
+							Toast.show({
+							type: 'error',
+							text1: 'Incorrect password. Try again.',
+							text1Style: {
+								fontSize:15
+							}
+							});
+						}
+		
+						showToast();
+					}
+				}, 500);
+
+			}
+		}, 500);
+
 	}; 
 	
 	const handleResetPassword = () => { 
@@ -64,9 +170,11 @@ const LoginScreen = ({navigation}:Props) => {
 				placeholder="Password" 
 				placeholderTextColor="#808080" 
 				secureTextEntry 
-				onChangeText={setPassword} 
-				value={password}
+				// onChangeText={setPassword} 
+				// value={password}
 				maxLength={20}		//max 20 char
+				onChangeText={newText => setText(newText)}
+                defaultValue={inputPassword}
 			/> 
 			<TouchableOpacity style={styles.registerbutton} onPress={handleRegisterUser}> 
 				<Text style={styles.registerbuttonText}>No account? Register here</Text> 

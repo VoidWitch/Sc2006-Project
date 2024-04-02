@@ -1,5 +1,7 @@
 //  AIzaSyDlRXMUhwmnCmDXpntaFkL66-vI6cMxWrY   -- Google Maps API key
 
+import Toast from 'react-native-toast-message';
+
 import 'react-native-gesture-handler';    //navigation stack, include at top
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
@@ -12,7 +14,11 @@ import type {PropsWithChildren} from 'react';
 // install firebase to root of project directory, $ npm install firebase
 
 import { initializeApp } from "firebase/app";
-import { getDatabase, ref, set } from "firebase/database";
+import { getDatabase, ref, set, get, push, update, child } from "firebase/database";
+import { mobile } from './Components/LoginForm/Login';
+
+var loginVal = null;
+global.loginVal = loginVal;
 
 const firebaseConfig = {
   apiKey: "AIzaSyBA3SGfDTI94WaJOxp_q0C2r3ypG6UCyj4",
@@ -36,17 +42,25 @@ export function writeUserData(mobile: string, password: string) {
   });
 }
 
+export function updateUserAnswer(mobile: string, password: string, answer: string) {
+  const db = getDatabase();
+  set(ref(db, 'users/' + mobile), {
+    password: password,
+    answer: answer
+  });
+}
 
 //Component Forms
-import Login from './LoginForm/Login'
-import ResetPw from './ResetPwForm/ResetPw';
-import Verification from './VerificationForm/Verification';
-import RegisterUser from './RegisterUserForm/RegisterUser';
-import Addresses from './AddressesForm/Addresses';
-import FAQ from './FAQForm/FAQ';
-import PrivacyConcerns from './PrivacyForm/PrivacyConcerns';
-import Map from './MapForm/Map';
-import ChangePw from './ChangePwForm/ChangePw';
+import Login from './Components/LoginForm/Login'
+import ResetPw from './Components/ResetPwForm/ResetPw';
+import Verification from './Components/VerificationForm/Verification';
+import RegisterUser from './Components/RegisterUserForm/RegisterUser';
+import Addresses from './Components/AddressesForm/Addresses';
+import FAQ from './Components/FAQForm/FAQ';
+import PrivacyConcerns from './Components/PrivacyForm/PrivacyConcerns';
+import Map from './Components/MapForm/Map';
+import ChangePw from './Components/ChangePwForm/ChangePw';
+import { sendPasswordResetEmail } from 'firebase/auth';
 
 const Stack = createStackNavigator();
 
@@ -56,6 +70,7 @@ const Stack = createStackNavigator();
 
 function App(): React.JSX.Element {
     return (
+      <>
         <NavigationContainer>
             <Stack.Navigator initialRouteName="Login">
             <Stack.Screen name="Login" component={Login} options={{ headerShown: false }}/>
@@ -70,6 +85,8 @@ function App(): React.JSX.Element {
             <Stack.Screen name="Cycle Savvy" component={Map} options={{ headerShown: false }} />
             </Stack.Navigator>
         </NavigationContainer>
+        <Toast/>
+      </>
     );
 }
 

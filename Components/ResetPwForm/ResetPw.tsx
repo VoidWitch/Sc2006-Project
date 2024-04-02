@@ -2,6 +2,29 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import React, { useState } from 'react'; 
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, KeyboardAvoidingView, Platform, ScrollView } from 'react-native'; 
 
+import { initializeApp } from "firebase/app";
+import { getDatabase, ref, set, get, push, update, child } from "firebase/database";
+
+import Toast from 'react-native-toast-message';
+
+import regAnswer from '../RegisterUserForm/RegisterUser'
+
+import { updateUserAnswer } from '../../App';
+
+const firebaseConfig = {
+    apiKey: "AIzaSyBA3SGfDTI94WaJOxp_q0C2r3ypG6UCyj4",
+    authDomain: "cycle-savvy.firebaseapp.com",
+    databaseURL: "https://cycle-savvy-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "cycle-savvy",
+    storageBucket: "cycle-savvy.appspot.com",
+    messagingSenderId: "537001875593",
+    appId: "1:537001875593:web:0d10ab8433ce7fb8e40e58",
+    measurementId: "G-3WGYQ5T50W"
+  };
+  
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+
 type RootStackParamList = {
     // Add other screens if needed
     'Login': undefined;	    // after successful -> go to login screen
@@ -17,9 +40,34 @@ const ResetPasswordScreen = ({navigation}:Props) => {
     const [mobile, setMobile] = useState(''); 
     const [newPassword, setNewPassword] = useState(''); 
     const [confirmPassword, setConfirmPassword] = useState(''); 
+
+    var userExist = null;
+    var userProp = {};
+
+    const getUserMobile = (mobile: string) => {
+        const dbRef = ref(getDatabase());
+        get(child(dbRef, `users/${mobile}`)).then((snapshot) => {
+          if (snapshot.exists()) {
+            userExist = true;
+          } else {
+            userExist = false;
+          }
+        });
+      }
+
+    const getUserPassword = (mobile: string) => {
+        const dbRef = ref(getDatabase());
+        get(child(dbRef, `users/${mobile}`)).then((snapshot) => {
+            if (snapshot.exists()) {
+                userProp = snapshot.val();
+                // console.log(userProp.password);
+            }
+        });
+    }
     
     const validateInput = () => { 
         // Basic validation 
+        /*
         if (newPassword !== confirmPassword) { 
         Alert.alert('Error', 'The new passwords do not match.'); 
         return false; 
@@ -27,24 +75,77 @@ const ResetPasswordScreen = ({navigation}:Props) => {
         if (newPassword.length < 6) { 
         Alert.alert('Error', 'Password must be at least 6 characters long.'); 
         return false; 
-        }
+        }*/
 
         //implement logic here
         // Here you would send the request to your backend to reset the password 
         // For example: updatePassword(mobile, newPassword)
+
+        getUserMobile(mobile);
+        getUserPassword(mobile);
+
+        setTimeout(function() {
+            if (userExist) {
+
+                // OBTAIN ANSWER FROM ACCOUNT
+
+                if (newPassword === confirmPassword) {
+
+                    updateUserAnswer(mobile, newPassword, userProp.answer);
+
+                    navigation.reset({ index: 0, routes: [{ name: 'Login' }] })
+
+                    return true;
+
+                } else {
+                    const showToast = () => { // show a toast message (android)
+                        Toast.show({
+                        type: 'error',
+                        text1: 'Passwords do not match. Try again.',
+                        text1Style: {
+                            fontSize:15
+                        }
+                        });
+                    }
+    
+                    showToast();
+    
+                    return false;
+                }
+
+            } else {
+                const showToast = () => { // show a toast message (android)
+                    Toast.show({
+                    type: 'error',
+                    text1: 'No account found.',
+                    text1Style: {
+                        fontSize:15
+                    }
+                    });
+                }
+
+                showToast();
+
+                return false;
+            }
+        }, 500);
         
-        return true;
+        // return true;
     }; 
 
     const handleResetPassword = () => { 
-        if (!validateInput()) {     // new pw not updated in database
-            return; 
+        
+        if (validateInput()) {  
+            
+            navigation.reset({ index: 0, routes: [{ name: 'Login' }] })
+
         }
-        console.log('Resetting password for mobile number: ', mobile); 
+        
+        // console.log('Resetting password for mobile number: ', mobile); 
 
         // Show a success message and navigate to main screen to register upon successful reset 
-        Alert.alert('Success', 'Your password has been reset. Please log in with your new password.');
-        navigation.reset({ index: 0, routes: [{ name: 'Login' }] })
+        // Alert.alert('Success', 'Your password has been reset. Please log in with your new password.');
+
     }; 
     
     return ( 
@@ -56,7 +157,7 @@ const ResetPasswordScreen = ({navigation}:Props) => {
         <ScrollView contentContainerStyle={{ flexGrow: 1 }}> 
             <View style={styles.container}>
             <View style={styles.container1}> 
-				<Text style={styles.header}>...skill issue...</Text> 
+				<Text style={styles.header}>Password Reset</Text> 
 			</View> 
             <Text style={styles.instructions}>Please enter a new password.</Text> 
             <Text style={styles.requirements}>Password must be at least 6 characters long.</Text> 

@@ -2,6 +2,32 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import React, { useState, useEffect } from 'react'; 
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, ScrollView } from 'react-native'; 
 
+import { updateUserAnswer } from '../../App';
+
+import { initializeApp } from "firebase/app";
+import { getDatabase, ref, set, get, push, update, child } from "firebase/database";
+
+import Toast from 'react-native-toast-message';
+
+import loginVal from '../../App';
+import regMobile from '../RegisterUserForm/RegisterUser'
+import regPassword from '../RegisterUserForm/RegisterUser'
+import regAnswer from '../RegisterUserForm/RegisterUser'
+
+const firebaseConfig = {
+    apiKey: "AIzaSyBA3SGfDTI94WaJOxp_q0C2r3ypG6UCyj4",
+    authDomain: "cycle-savvy.firebaseapp.com",
+    databaseURL: "https://cycle-savvy-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "cycle-savvy",
+    storageBucket: "cycle-savvy.appspot.com",
+    messagingSenderId: "537001875593",
+    appId: "1:537001875593:web:0d10ab8433ce7fb8e40e58",
+    measurementId: "G-3WGYQ5T50W"
+  };
+  
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+
 type RootStackParamList = {
     // Add other screens if needed
     'Cycle Savvy': undefined;	    //nagivate to main page upon verification
@@ -16,6 +42,13 @@ interface Props {
 const PhoneVerificationScreen = ({navigation}:Props) => { 
     const [code, setCode] = useState(''); 
     const [timer, setTimer] = useState(60); 
+
+    const [mobile, setMobile] = useState(''); 
+    const [password, setPassword] = useState(''); 
+    const [answer, setText] = useState(''); 
+
+    var userExist = null;
+    var userProp = {};
     
     useEffect(() => { 
         // Start the countdown 
@@ -26,6 +59,29 @@ const PhoneVerificationScreen = ({navigation}:Props) => {
         // Clean up the interval on component unmount 
         return () => clearInterval(interval); 
     }, []); 
+
+    ////////
+
+    const getUserMobile = (mobile: string) => {
+        const dbRef = ref(getDatabase());
+        get(child(dbRef, `users/${mobile}`)).then((snapshot) => {
+          if (snapshot.exists()) {
+            userExist = true;
+          } else {
+            userExist = false;
+          }
+        });
+      }
+
+	const getUserPassword = (mobile: string) => {
+		const dbRef = ref(getDatabase());
+		get(child(dbRef, `users/${mobile}`)).then((snapshot) => {
+			if (snapshot.exists()) {
+				userProp = snapshot.val();
+				// console.log(userProp.password);
+			}
+		});
+	}
     
     const verifyCode = () => {  
         // Add your verification logic here check otp that has been sent upon correct login details
@@ -33,13 +89,131 @@ const PhoneVerificationScreen = ({navigation}:Props) => {
         // if verification failed -> handleResendCode(), prompt wrong input
         // else -> navigate to mainUI screen
 
-        // handleVerified();
+        if (global.loginVal) { // if IN LOGIN MODE
 
-        // const [answer, setAnswer] = useState(''); 
+            global.regPassword = password;
 
-        // writeUserAnswer(mobile, answer);
+            if (mobile === global.regMobile && password === global.regPassword) { // if similar to prev details
 
-        navigation.reset({ index: 7, routes: [{ name: 'Cycle Savvy' }] })
+                getUserMobile(mobile);
+
+                setTimeout(function() {
+
+                    if (userExist === false) {
+
+                        // show error
+                        const showToast = () => { // show a toast message (android)
+                            Toast.show({
+                            type: 'error',
+                            text1: 'No account found.',
+                            text1Style: {
+                                fontSize:15
+                            }
+                            });
+                        }
+
+                        showToast();
+
+                    } else {
+
+                        // check that password is correct, then proceed
+
+                        getUserPassword(mobile);
+
+                        // console.log(inputPassword);
+
+                        setTimeout(function() {
+                            if (userProp.password === password) {
+                                
+                                // Check question answer
+
+                                if (userProp.answer === answer) {
+
+                                    // proceed to login
+
+                                    navigation.reset({ index: 7, routes: [{ name: 'Cycle Savvy' }] })
+
+                                } else {
+                                    const showToast = () => { // show a toast message (android)
+                                        Toast.show({
+                                        type: 'error',
+                                        text1: 'Incorrect answer. Try again.',
+                                        text1Style: {
+                                            fontSize:15
+                                        }
+                                        });
+                                    }
+                    
+                                    showToast();
+                                }
+                                
+                            } else {
+                                const showToast = () => { // show a toast message (android)
+                                    Toast.show({
+                                    type: 'error',
+                                    text1: 'Incorrect password. Try again.',
+                                    text1Style: {
+                                        fontSize:15
+                                    }
+                                    });
+                                }
+                
+                                showToast();
+                            }
+                        }, 500);
+
+                    }
+                }, 500);
+
+            } else {
+
+                const showToast = () => { // show a toast message (android)
+                    Toast.show({
+                    type: 'error',
+                    text1: 'Ensure that details are the same.',
+                    text1Style: {
+                        fontSize:15
+                    }
+                    });
+                }
+
+                showToast();
+            }
+
+        } else { // IF IN REGISTER MODE
+
+            // handleVerified();
+            /*
+            console.log(mobile);
+            console.log(password);
+            console.log(answer);*/
+
+            // CHECK THAT MOBILE, PASSWORD IS CORRECT HERE (to previous page) BEFORE CONFIRMING
+
+            if (mobile === global.regMobile && password === global.regPassword) {
+
+                global.regAnswer = answer;
+
+                updateUserAnswer(mobile, password, answer);
+
+                navigation.reset({ index: 7, routes: [{ name: 'Cycle Savvy' }] })
+
+            } else {
+
+                const showToast = () => { // show a toast message (android)
+                    Toast.show({
+                    type: 'error',
+                    text1: 'Ensure that details are the same.',
+                    text1Style: {
+                        fontSize:15
+                    }
+                    });
+                }
+
+                showToast();
+            }
+
+        }
     };
 
     const handleVerified = () => {
@@ -58,6 +232,13 @@ const PhoneVerificationScreen = ({navigation}:Props) => {
         //send OTP to registered mobile number
         //return produced OTP
     }
+    /*
+    const handleInputChange = (event) => {
+
+        console.log(event.currentTarget.value);
+
+        // setAnswer(event.target.value);
+      };*/
     
     return ( 
         <KeyboardAvoidingView 
@@ -71,16 +252,41 @@ const PhoneVerificationScreen = ({navigation}:Props) => {
             <View style={styles.container1}> 
 				<Text style={styles.header}>Security Question</Text> 
 			</View>
+            <Text style={styles.instruction}>What is your mobile number again?</Text>  
+            <Text style={styles.description}>Please answer the question above.</Text>
+            <TextInput 
+                style={styles.input} 
+                placeholder="Mobile Number" 
+                placeholderTextColor="#808080" 
+                keyboardType="number-pad" 
+                onChangeText={setMobile} 
+                value={mobile}
+                maxLength={8}
+            /> 
+            <Text style={styles.instruction}>Enter password again.</Text>  
+            <Text style={styles.description}>Please answer the question above.</Text>
+            <TextInput 
+                style={styles.input} 
+                placeholder="Password" 
+                placeholderTextColor="#808080" 
+                secureTextEntry 
+                onChangeText={setPassword} 
+                value={password}
+                maxLength={20}      //max 20 char
+            /> 
             <Text style={styles.instruction}>What is your favourite colour?</Text>  
             <Text style={styles.description}>Please answer the question above.</Text>
             <TextInput 
                 style={styles.input} 
                 placeholder="Answer" 
                 placeholderTextColor="#808080" 
+                onChangeText={newText => setText(newText)}
+                defaultValue={answer}
                 
-                onChangeText={setCode} 
-                value={code} 
-                maxLength={6} 
+                // onChangeText={setCode} 
+                // value={answer} 
+                // onChangeText={}
+                // maxLength={6} 
             /> 
             <TouchableOpacity style={styles.button} onPress={verifyCode}> 
                 <Text style={styles.buttonText}>Submit</Text> 
