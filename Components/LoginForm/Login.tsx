@@ -1,36 +1,33 @@
 import { StackNavigationProp } from '@react-navigation/stack/lib/typescript/src/types';
 import React, { useState } from 'react'; 
-import { View, Text, TouchableOpacity, StyleSheet, Image, KeyboardAvoidingView, Platform, ScrollView, TextInput } from 'react-native'; 
+import { View, Text, TouchableOpacity, StyleSheet, Image, KeyboardAvoidingView, Platform, ScrollView, TextInput, Alert } from 'react-native'; 
 
 import { initializeApp } from "firebase/app";
 import { getDatabase, ref, set, get, push, update, child } from "firebase/database";
 
-import Toast from 'react-native-toast-message';
-
-import loginVal from '../../App';
-import regMobile from '../RegisterUserForm/RegisterUser'
-import regPassword from '../RegisterUserForm/RegisterUser'
-import regAnswer from '../RegisterUserForm/RegisterUser'
+// import loginVal from './../App';
+// import regMobile from '../RegisterUserForm/RegisterUser'
+// import regPassword from '../RegisterUserForm/RegisterUser'
+// import regAnswer from '../RegisterUserForm/RegisterUser'
 
 const firebaseConfig = {
-  apiKey: "AIzaSyBA3SGfDTI94WaJOxp_q0C2r3ypG6UCyj4",
-  authDomain: "cycle-savvy.firebaseapp.com",
-  databaseURL: "https://cycle-savvy-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "cycle-savvy",
-  storageBucket: "cycle-savvy.appspot.com",
-  messagingSenderId: "537001875593",
-  appId: "1:537001875593:web:0d10ab8433ce7fb8e40e58",
-  measurementId: "G-3WGYQ5T50W"
+	apiKey: "AIzaSyBA3SGfDTI94WaJOxp_q0C2r3ypG6UCyj4",
+	authDomain: "cycle-savvy.firebaseapp.com",
+	databaseURL: "https://cycle-savvy-default-rtdb.asia-southeast1.firebasedatabase.app",
+	projectId: "cycle-savvy",
+	storageBucket: "cycle-savvy.appspot.com",
+	messagingSenderId: "537001875593",
+	appId: "1:537001875593:web:0d10ab8433ce7fb8e40e58",
+	measurementId: "G-3WGYQ5T50W"
 };
 
-// Initialize Firebase
+// INITIALIZE FIREBASE
 const app = initializeApp(firebaseConfig);
 
 type RootStackParamList = {
-	// Add other screens if needed
-	'Reset Password': undefined;	//press reset pw -> go to reset pw screen
-	'Verification': undefined;		//press login if valid creds -> go to verification screen
-	'Register User': undefined;		//press reg user -> go to register user screen
+	'Reset Password': undefined;	// RESET PW SCREEN
+	'Verification': undefined;		// LOGIN REDIRECTS TO VERIFICATION SCREEN
+	'Register User': undefined;		// REGISTER NEW USER SCREEN
 };
   
 type ScreenNavigationProp = StackNavigationProp<RootStackParamList>;
@@ -40,9 +37,7 @@ interface Props {
 }
   
 const LoginScreen = ({navigation}:Props) => { 
-	const [mobile, setMobile] = useState(''); 
-	const [password, setPassword] = useState(''); 
-
+	const [mobile, setMobile] = useState('');
 	const [inputPassword, setText] = useState(''); 
 
 	var userExist = null;
@@ -51,12 +46,11 @@ const LoginScreen = ({navigation}:Props) => {
 	const getUserMobile = (mobile: string) => {
         const dbRef = ref(getDatabase());
         get(child(dbRef, `users/${mobile}`)).then((snapshot) => {
-          if (snapshot.exists()) {
-            userExist = true;
-          } else {
-            userExist = false;
-          }
-        });
+			if (snapshot.exists()) 
+				userExist = true;
+			else 
+				userExist = false;
+		});
       }
 
 	const getUserPassword = (mobile: string) => {
@@ -70,78 +64,40 @@ const LoginScreen = ({navigation}:Props) => {
 	}
 	
 	const handleLogin = () => { 
-
 		// console.log(global.loginVal);
-
-		global.loginVal = true;
-
-		getUserMobile(mobile);
+		// global.loginVal = true;
 
         setTimeout(function() {
+			// CHECK FOR EMPTY FIELDS
+            if (mobile === "" || inputPassword === "") {		// IF BOTH FIELDS ARE FILLED, CHECK FOR
+				Alert.alert('Error', 'There cannot be an empty field.'); }
+			else {
+				getUserMobile(mobile);
+                if (userExist) {      							// IF USER EXISTS, CHECK FOR
+					getUserPassword(mobile);
 
-            if (userExist === false) {
-
-                // show error
-                const showToast = () => { // show a toast message (android)
-                    Toast.show({
-                    type: 'error',
-                    text1: 'No account found.',
-                    text1Style: {
-                        fontSize:15
-                    }
-                    });
-                }
-
-                showToast();
-
-            } else {
-
-				// check that password is correct, then proceed
-
-				getUserPassword(mobile);
-
-				// console.log(inputPassword);
-
-				setTimeout(function() {
-					if (userProp.password === inputPassword) {
-
-						global.regMobile = mobile;
-						global.regPassword = password;
-
-						//implement login logic then navigation to verification UI
+                    if (userProp.password === inputPassword) {  // IF PW MATCHES
+                        global.regMobile = mobile;
+						global.regPassword = inputPassword;
 						console.log('Verifying user...');
 						navigation.replace('Verification');
-					} else {
-						const showToast = () => { // show a toast message (android)
-							Toast.show({
-							type: 'error',
-							text1: 'Incorrect password. Try again.',
-							text1Style: {
-								fontSize:15
-							}
-							});
-						}
-		
-						showToast();
-					}
-				}, 500);
-
-			}
-		}, 500);
-
-	}; 
+ 
+                    } else Alert.alert('Error', 'Incorrect password. Try again.');
+                } else Alert.alert('Error', 'No account found.');
+            }
+            userExist = null;
+        }, 500); 
+	};
 	
-	const handleResetPassword = () => { 
-		//implement navigation to reset UI
+	const handleResetPassword = () => {
 		console.log('Resetting password...'); 
-		navigation.navigate('Reset Password');
+		navigation.navigate('Reset Password');		// NAVIGATE TO RESET PW INTERFACE
 	}; 
 	
-	const handleRegisterUser = () => { 
-		//implement navigation to register user UI
+	const handleRegisterUser = () => {
 		console.log('Registering user...');
-		navigation.navigate('Register User');
-	}; 
+		navigation.navigate('Register User');		// NAVIGATE TO REGISTRATION INTERFACE
+	};
  
 	return ( 
 		<KeyboardAvoidingView 
@@ -170,9 +126,7 @@ const LoginScreen = ({navigation}:Props) => {
 				placeholder="Password" 
 				placeholderTextColor="#808080" 
 				secureTextEntry 
-				// onChangeText={setPassword} 
-				// value={password}
-				maxLength={20}		//max 20 char
+				maxLength={20}		// 20 CHAR MAX
 				onChangeText={newText => setText(newText)}
                 defaultValue={inputPassword}
 			/> 
