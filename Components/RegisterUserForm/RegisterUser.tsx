@@ -1,42 +1,42 @@
 import { StackNavigationProp } from '@react-navigation/stack/lib/typescript/src/types';
 import React, { useState, useRef } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, KeyboardAvoidingView, Platform, ScrollView, Alert, Modal } from 'react-native';
 
-import { writeUserData } from '../../App';
-// import { getUserMobile } from '../../App';
-import { updateUserAnswer } from '../../App';
+// import { writeUserData } from './../App';
+// import { updateUserAnswer } from './../App';
+// import loginVal from './../App';
 
 import { initializeApp } from "firebase/app";
 import { getDatabase, ref, set, get, push, update, child } from "firebase/database";
+import { updateCurrentUser } from 'firebase/auth';
+import { updateUserAnswer } from '../App';
 
-import Toast from 'react-native-toast-message';
+// var regMobile = null;
+// var regPassword = null;
+// var securityQuestion = null;
+// var regAnswer = null;
 
-import loginVal from '../../App';
-
-var regMobile = null;
-var regPassword = null;
-var regAnswer = null;
-global.regMobile = regMobile;
-global.regPassword = regPassword;
-global.regAnswer = regAnswer;
+// global.regMobile = regMobile;
+// global.regPassword = regPassword;
+// global.securityQuestion = securityQuestion;
+// global.regAnswer = regAnswer;
 
 const firebaseConfig = {
-  apiKey: "AIzaSyBA3SGfDTI94WaJOxp_q0C2r3ypG6UCyj4",
-  authDomain: "cycle-savvy.firebaseapp.com",
-  databaseURL: "https://cycle-savvy-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "cycle-savvy",
-  storageBucket: "cycle-savvy.appspot.com",
-  messagingSenderId: "537001875593",
-  appId: "1:537001875593:web:0d10ab8433ce7fb8e40e58",
-  measurementId: "G-3WGYQ5T50W"
+    apiKey: "AIzaSyBA3SGfDTI94WaJOxp_q0C2r3ypG6UCyj4",
+    authDomain: "cycle-savvy.firebaseapp.com",
+    databaseURL: "https://cycle-savvy-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "cycle-savvy",
+    storageBucket: "cycle-savvy.appspot.com",
+    messagingSenderId: "537001875593",
+    appId: "1:537001875593:web:0d10ab8433ce7fb8e40e58",
+    measurementId: "G-3WGYQ5T50W"
 };
 
-// Initialize Firebase
+// INITIALIZE FIREBASE
 const app = initializeApp(firebaseConfig);
 
-
 type RootStackParamList = {
-    'Verification': undefined;	    //press register pw -> go to verification screen
+    'Verification': undefined;	    // REGISTER WILL REDIRECT USER TO VERIFICATION PAGE
 };
   
 type ScreenNavigationProp = StackNavigationProp<RootStackParamList>;
@@ -46,104 +46,61 @@ interface Props {
 }
 
 const RegisterUserScreen = ({navigation}:Props) => { 
-
     const [mobile, setMobile] = useState(''); 
     const [password, setPassword] = useState(''); 
-    const [confirmPw, setConfirmPw] = useState(''); 
+    const [confirmPw, setConfirmPw] = useState('');
 
-    var userExist = null;
-    var mobileCount = 0;
+    const [showDropdown, setShowDropdown] = useState(false);
+    const [securityQuestion, setSecurityQuestion] = useState('Select a security question.');
+    const [securityAnswer, setSecurityAnswer] = useState('');
 
-    const countChar = () => {
-        mobileCount++;
-    }
+    var userExist: null = null;
+    // var mobileCount = 0;
 
-    const getUserMobile = (mobile: string) => {
+    // const countChar = () => {
+    //     mobileCount++;
+    // }
+    const toggleDropdown = () => {
+        setShowDropdown(!showDropdown);
+    };
+    const handleOptionSelect = (option: any) => {
+        setSecurityQuestion(option);
+        toggleDropdown();
+    };
+    
+    const getUserMobile = (mobile: string) => {  
         const dbRef = ref(getDatabase());
-        get(child(dbRef, `users/${mobile}`)).then((snapshot) => {
-          if (snapshot.exists()) {
-            userExist = true;
-          } else {
-            userExist = false;
-          }
+        get(child(dbRef, `users/${mobile}`)).then((snapshot) => {   // CHECK FOR EXISTING USERS
+            if (snapshot.exists()) 
+                userExist = true;
+            else 
+                userExist = false;
         });
-      }
+    }
     
     const registerUser = () => { 
-
-        getUserMobile(mobile);
         setTimeout(function() {
+        if (!mobile || !password || !confirmPw || securityQuestion === "Select a security question." || !securityAnswer)      // IF ALL FIELDS ARE FILLED, CHECK FOR
+            Alert.alert('Error', 'There cannot be an empty field.');
+        else {
+            getUserMobile(mobile);      
+            if (mobile.length < 8) {  
+                if (!userExist) {                  // IF USER MOBILE NOT IN DATABASE, WRITE FOLLOWING:
+                    if (password.length >= 6) {                 // IF PW MEETS LENGTH REQUIREMENTS
+                        if (password === confirmPw) {           // IF PW MATCHES
+                            // global.regMobile = mobile;
+                            // global.regPassword = password;
+                            // console.log(global.regPassword);
+                            // global.securityQuestion = securityQuestion;
+                            // global.regAnswer = securityAnswer;                                                            
+                            handleRegistered();  
 
-            // CHECK IF MOBILE IS VALID
-
-            if (userExist === false) { // IF USER MOBILE NOT in database, write the following:
-
-                if (password !== "" && confirmPw !== "") {
-
-                    if (password === confirmPw) { // if passwords match
-
-                        // CHECK IF PASSWORD MEETS MIN. SECURITY
-
-                        global.regMobile = mobile;
-                        global.regPassword = password;
-
-                        console.log(global.regPassword);
-
-                        // writeUserData(mobile, password); // Write user data to Firebase database
-
-                        handleRegistered();  
-
-                    } else {
-
-                        const showToast = () => { // show a toast message (android)
-                            Toast.show({
-                            type: 'error',
-                            text1: 'Passwords do not match. Try again.',
-                            text1Style: {
-                                fontSize:15
-                            }
-                            });
-                        }
-        
-                        showToast();
-                    }
-
-                } else {
-
-                    const showToast = () => { // show a toast message (android)
-                        Toast.show({
-                        type: 'error',
-                        text1: 'Enter a password value.',
-                        text1Style: {
-                            fontSize:15
-                        }
-                        });
-                    }
-    
-                    showToast();
-                }
-
-            } else {
-
-                // PERFORM 'npm install react-native-toast-message' to root
-
-                const showToast = () => { // show a toast message (android)
-                    Toast.show({
-                    type: 'error',
-                    text1: 'Number has been registered.',
-                    text1Style: {
-                        fontSize:15
-                    }
-                    });
-                }
-
-                showToast();
-
-                // underlineColorAndroid="red" for TextInput
-            }
-
-            userExist = null;
-
+                        } else Alert.alert('Error', 'Passwords do not match. Try again.');
+                    } else Alert.alert('Error', 'Password must be at least 6 characters long.');
+                } else Alert.alert('Error', 'Number is registered to an existing account.');
+            } else Alert.alert('Error', 'Invalid number.');
+        }
+         userExist = null;
         }, 500); 
 
         // Show him the code submission form
@@ -157,17 +114,12 @@ const RegisterUserScreen = ({navigation}:Props) => {
         // update user info into database
         // if valid format, call handleRegistered to navigate back to login screen to re-login   
     }; 
+    
     const handleRegistered = () => { 
-
-            // CHECK THAT PASSWORD AND CONFIRM PASSWORDS MATCH
-
-            global.loginVal = false;
-
-            //implement navigation back to login screen
-            console.log('Registered! Verifying user...');
-            navigation.reset({ index: 3, routes: [{ name: 'Verification' }] })
-
-
+        // global.loginVal = false;
+        console.log('Registered! Verifying user...');   // REDIRECT TO VERIFICATION PAGE
+        updateUserAnswer(mobile, password, securityQuestion, securityAnswer);
+        navigation.reset({ index: 3, routes: [{ name: 'Verification' }] })
 	}; 
     
     return ( 
@@ -182,7 +134,8 @@ const RegisterUserScreen = ({navigation}:Props) => {
                 <Text style={styles.header}>Join Us!</Text> 
             </View> 
             <Image source={require('./CycleLogo.png')} style={styles.image} /> 
-            <Text style={styles.action}>Sign up:</Text> 
+            <Text style={styles.action}>Sign up:</Text>
+
             <TextInput 
                 style={styles.input} 
                 placeholder="Mobile Number" 
@@ -191,8 +144,7 @@ const RegisterUserScreen = ({navigation}:Props) => {
                 onChangeText={setMobile} 
                 value={mobile}
                 maxLength={8}
-                onChange={countChar}
-
+                // onChange={countChar}
                 // onChange={count => countChar(count)}
                 // {newText => setText(newText)}
             /> 
@@ -203,7 +155,7 @@ const RegisterUserScreen = ({navigation}:Props) => {
                 secureTextEntry 
                 onChangeText={setPassword} 
                 value={password}
-                maxLength={20}      //max 20 char
+                maxLength={20}      // 20 CHAR MAX
             /> 
             <TextInput 
                 style={styles.input} 
@@ -212,8 +164,42 @@ const RegisterUserScreen = ({navigation}:Props) => {
                 secureTextEntry 
                 onChangeText={setConfirmPw} 
                 value={confirmPw}
-                maxLength={20}      //max 20 char
+                maxLength={20}      // 20 CHAR MAX
             /> 
+
+            <TouchableOpacity style={styles.securityBox}onPress= {toggleDropdown}>
+                <Text style={styles.securityheader}>{securityQuestion}</Text>
+            </TouchableOpacity>
+            <Modal visible={showDropdown} animationType="slide">
+                <View style={styles.dropdownContainer}>
+                    <TouchableOpacity onPress={() => handleOptionSelect("What is your mother's maiden name?")}>
+                        <Text style={styles.questions}>What is your mother's maiden name?</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => handleOptionSelect("What model was your first car?")}>
+                        <Text style={styles.questions}>What model was your first car?</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => handleOptionSelect("Which city did you grow up in?")}>
+                        <Text style={styles.questions}>Which city did you grow up in?</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => handleOptionSelect("Who is your childhood best friend?")}>
+                        <Text style={styles.questions}>Who is your childhood best friend?</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => handleOptionSelect("What is your favourite color?")}>
+                        <Text style={styles.questions}>What is your favourite color?</Text>
+                    </TouchableOpacity>
+                </View>
+            </Modal>
+
+            <TextInput 
+                style={styles.securityAns} 
+                placeholder="Type here ..." 
+                placeholderTextColor="#808080" 
+                onChangeText={setSecurityAnswer} 
+                value={securityAnswer}
+                textAlign='center'
+                maxLength={32}      // 32 CHAR MAX
+            /> 
+
             <TouchableOpacity style={styles.createAccount} onPress={registerUser}> 
                 <Text style={styles.createAccountText}>Create your account</Text> 
             </TouchableOpacity> 
@@ -235,8 +221,8 @@ const styles = StyleSheet.create({
         width: '100%',
         alignSelf: 'flex-start',
         padding: 20,
-        paddingBottom: 10,
-        marginBottom: 50,
+        paddingBottom: 2,
+        marginBottom: 5,
     },
     header: {
         color: '#fff',
@@ -244,22 +230,9 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         marginBottom: 20,
     },
-    imagetitle: {
-        color: '#000',
-        fontStyle: 'italic',
-        fontSize: 28,
-        fontWeight: 'bold',
-        marginTop: -20,
-    },
     image: {
         width: 300,
         height: 200,
-    },
-    imagecaption: {
-        fontSize: 22,
-        fontStyle: 'italic',
-        fontWeight: 'bold',
-        marginBottom: 30,
     },
     action: {
         color: '#000',
@@ -267,8 +240,55 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         paddingRight: 270,
         margin: 5,
+        marginTop: 2,
     },
     input: {
+        width: '80%',
+        height: 40,
+        borderColor: '#000',
+        borderWidth: 1,
+        borderRadius: 5,
+        paddingHorizontal: 10,
+        fontSize: 14,
+        marginBottom: 5,
+    },
+    securityBox: {
+        width: '80%',
+        alignItems: 'center',
+        height: 30,
+        borderColor: '#00000000',
+        backgroundColor: '#48c289',
+        borderWidth: 1,
+        borderRadius: 5,
+        paddingVertical: 4,
+        marginTop: 5,
+    },
+    securityheader: {
+        color: 'white', 
+        fontSize: 15,
+        fontWeight: 'bold',
+    },
+    questionDisplay: {
+        width: '80%',
+        height: 40,
+        borderColor: '#000',
+        borderWidth: 1,
+        borderRadius: 5,
+        paddingHorizontal: 10,
+        fontSize: 14,
+        marginBottom: 5,
+    },
+    dropdownContainer: {
+        marginTop: 100,
+        backgroundColor: '#ffffff',
+        padding: 20,
+    },
+    questions: {
+        color: '#000',
+        fontSize: 18,
+        marginBottom: 20,
+    },
+    securityAns: {
         width: '80%',
         height: 40,
         borderColor: '#000',
