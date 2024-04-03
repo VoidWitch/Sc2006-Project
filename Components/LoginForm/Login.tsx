@@ -77,8 +77,8 @@ const LoginScreen = ({navigation}:Props) => {
 					getUserPassword(mobile);
 
                     if (userProp.password === inputPassword) {  // IF PW MATCHES
-                        global.regMobile = mobile;
-						global.regPassword = inputPassword;
+                        // global.regMobile = mobile;
+						// global.regPassword = inputPassword;
 						console.log('Verifying user...');
 						navigation.replace('Verification');
  
@@ -127,7 +127,7 @@ const LoginScreen = ({navigation}:Props) => {
 				placeholderTextColor="#808080" 
 				secureTextEntry 
 				maxLength={20}		// 20 CHAR MAX
-				onChangeText={newText => setText(newText)}
+				onChangeText={setText}
                 defaultValue={inputPassword}
 			/> 
 			<TouchableOpacity style={styles.registerbutton} onPress={handleRegisterUser}> 
