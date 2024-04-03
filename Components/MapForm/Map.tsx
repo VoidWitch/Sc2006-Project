@@ -125,9 +125,106 @@ const Map = ({navigation}:Props) => {
 
     const handleSearch = () => {
         // Implementation logic for bicycle search
-        // Get user input location -> convert to coordinates and compare with bicycle lots
+        // Call filterSearch and get both filteredResults and searchCoordinates
+        const { filteredResults, searchCoordinates } = await filterSearch(); 
+
+        // Calculate the distance between each parking lot and the search coordinates
+        const calculateDistance = (lat1, lon1, lat2, lon2) => {
+            const R = 6371e3; // Earth's radius in meters
+            const φ1 = lat1 * Math.PI/180; // φ, λ in radians
+            const φ2 = lat2 * Math.PI/180;
+            const Δφ = (lat2-lat1) * Math.PI/180;
+            const Δλ = (lon2-lon1) * Math.PI/180;
+    
+            const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+                     Math.cos(φ1) * Math.cos(φ2) *
+                     Math.sin(Δλ/2) * Math.sin(Δλ/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    
+            const d = R * c; // in meters
+            return d;
+        };
+
+         // Calculate distances and add them to the filteredResults objects
+        const resultsWithDistances = filteredResults.map(parkingLot => ({
+            ...parkingLot,
+            distance: calculateDistance(
+                parkingLot.Latitude, parkingLot.Longitude,
+                searchCoordinates.lat, searchCoordinates.long
+            )
+        }));
+
+        // Sort the parking lots by distance and return the three nearest ones
+        const sortedResults = resultsWithDistances.sort((a, b) => a.distance - b.distance);
+        const nearestParkingLots = sortedResults.slice(0, 3);
+
+        return nearestParkingLots;
     };
 
+<<<<<<< main
+    const filterSearch = () => {
+        //user input after they input the bicycle park they want 
+        const userInput = {
+            rackType: 'Yellow Box', // Example value. Frontend need to prompt the user 
+            shelterIndicator: 'N', // Example value.  Frontend need to prompt the user
+        };
+            
+        // Placeholder for user's current location or specified destination
+        // These could be obtained from your location services
+        const userLocation = {
+            lat: 1.369924301878832, // Example latitude for current location. Need to get their current userLocation
+            long: 103.76460884309661, // Example longitude for current location. Need to get their current userLocation
+        };
+
+        const targetDestination = {
+            lat: 1.3678652377044633, // Example latitude for target destination. Need to derive the coords from target destination
+            long: 103.76884530524208, // Example longitude for target destination. Need to derive the coords from target destination
+        };
+
+        // Determine the search coordinates based on the search type
+        // If a target destination is provided, use it; otherwise, use the user's current location
+        const searchCoordinates = targetDestination || userLocation;
+
+        // Define the API endpoint and parameters
+        const apiUrl = 'http://datamall2.mytransport.sg/ltaodataservice/BicycleParkingv2';
+        const params = new URLSearchParams({
+            Lat: searchCoordinates.lat.toString(),
+            Long: searchCoordinates.long.toString(),
+            Dist: '0.5', // Default radius in kilometers. Can change if needed.
+        });
+
+        // SDK key for authentication
+        const sdkKey = 'd7db4634a5d961ba6d782b134530e3b3';
+
+        try {
+            // Make the API request using fetch with the SDK key in the Authorization header
+            const response = await fetch(`${apiUrl}?${params.toString()}`, {
+                headers: {
+                    'Authorization': `Bearer ${sdkKey}`
+                }
+            });
+
+            // Check if the request was successful
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+
+            // Parse the response as JSON
+            const data = await response.json();
+
+            // Filter the results based on user input
+            const filteredResults = data.value.filter(parkingLot => {
+                return parkingLot.RackType === userInput.rackType && parkingLot.ShelterIndicator === userInput.shelterIndicator;
+            });
+
+            // Return the filtered results
+            return { filteredResults, searchCoordinates};
+
+            // Display the filtered results
+            console.log(filteredResults);
+        } catch (error) {
+            console.error('Error fetching bicycle parking locations:', error);
+=======
     const filterSearch = (value: number) => {
         setFilterDropdownVisible(false);
         setSelectedFilter(value);
@@ -139,6 +236,7 @@ const Map = ({navigation}:Props) => {
 
     const handleShelterFilter = () => {
         setShelterFilter(!shelterFilter);
+>>>>>>> main
     };
 
     const displayLots = () => {
