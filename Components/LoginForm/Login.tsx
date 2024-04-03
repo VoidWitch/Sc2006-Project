@@ -69,7 +69,7 @@ const LoginScreen = ({navigation}:Props) => {
 
         setTimeout(function() {
 			// CHECK FOR EMPTY FIELDS
-            if (mobile === "" || inputPassword === "") {		// IF BOTH FIELDS ARE FILLED, CHECK FOR
+            if (!mobile || !inputPassword) {		// IF BOTH FIELDS ARE FILLED, CHECK FOR
 				Alert.alert('Error', 'There cannot be an empty field.'); }
 			else {
 				getUserMobile(mobile);
