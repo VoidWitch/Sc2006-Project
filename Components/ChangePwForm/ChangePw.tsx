@@ -1,7 +1,9 @@
 import { StackNavigationProp } from '@react-navigation/stack/lib/typescript/src/types';
-import React, { useState } from 'react'; 
+import React, { useEffect, useState } from 'react'; 
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, KeyboardAvoidingView, Platform, ScrollView } from 'react-native'; 
-import { mobile } from '../LoginForm/Login';
+import {regMobile} from '../LoginForm/Login';
+import { updateUserData } from './../App';
+import { child, get, getDatabase, ref } from 'firebase/database';
 
 type RootStackParamList = {
 	// Add other screens if needed
@@ -16,7 +18,23 @@ interface Props {
 
 const ChangePwScreen = ({navigation}:Props) => {
     const [newPassword, setNewPassword] = useState(''); 
-    const [confirmPassword, setConfirmPassword] = useState(''); 
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [mobile, setMobile] = useState('');
+    
+    useEffect(() => {
+        const fetchData = async () => {
+            const dbRef = ref(getDatabase());
+            const snapshot = await get(child(dbRef, `users/${regMobile}`));
+            if (snapshot.exists()) {
+                const userData = snapshot.val();
+                setMobile(userData.mobile);
+            } else {
+                console.log('Error, question not found');
+            }
+        };
+
+        fetchData();
+    }, []);
 
     const validateInput = () => { 
         // Basic validation 
@@ -30,19 +48,15 @@ const ChangePwScreen = ({navigation}:Props) => {
         }
 
         //implement logic here
-        // Here you would send the request to your backend to reset the password 
-        // For example: updatePassword(mobile, newPassword) -> the mobile number for the user is
-        //imported here so u can refer to it when resetting in the database
-        
+        updateUserData(mobile, newPassword);
         return true;
     }; 
 
     const handleChangePassword = () => { 
-        if (!validateInput()) {     // new pw not updated in database
+        if (!validateInput()) {     // NEW PW INVALIDATED
             return; 
         }
-        console.log('Changing password for mobile number: ', mobile); 
-
+        // console.log('Changing password for mobile number: ', regMobile); 
         // Show a success message and navigate to main screen to register upon successful reset 
         Alert.alert('Success', 'Your password has been changed.');
         navigation.reset({ index: 7, routes: [{ name: 'Cycle Savvy' }] })
