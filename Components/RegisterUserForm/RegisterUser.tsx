@@ -2,24 +2,11 @@ import { StackNavigationProp } from '@react-navigation/stack/lib/typescript/src/
 import React, { useState, useRef } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, KeyboardAvoidingView, Platform, ScrollView, Alert, Modal } from 'react-native';
 
-// import { writeUserData } from './../App';
-// import { updateUserAnswer } from './../App';
-// import loginVal from './../App';
+import { writeUserData } from './../App';
 
 import { initializeApp } from "firebase/app";
 import { getDatabase, ref, set, get, push, update, child } from "firebase/database";
-import { updateCurrentUser } from 'firebase/auth';
-import { updateUserAnswer } from '../App';
-
-// var regMobile = null;
-// var regPassword = null;
-// var securityQuestion = null;
-// var regAnswer = null;
-
-// global.regMobile = regMobile;
-// global.regPassword = regPassword;
-// global.securityQuestion = securityQuestion;
-// global.regAnswer = regAnswer;
+// import { updateCurrentUser } from 'firebase/auth';
 
 const firebaseConfig = {
     apiKey: "AIzaSyBA3SGfDTI94WaJOxp_q0C2r3ypG6UCyj4",
@@ -36,7 +23,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 
 type RootStackParamList = {
-    'Verification': undefined;	    // REGISTER WILL REDIRECT USER TO VERIFICATION PAGE
+    'Cycle Savvy': undefined;	    // REGISTER WILL REDIRECT USER TO VERIFICATION PAGE
 };
   
 type ScreenNavigationProp = StackNavigationProp<RootStackParamList>;
@@ -84,15 +71,14 @@ const RegisterUserScreen = ({navigation}:Props) => {
             Alert.alert('Error', 'There cannot be an empty field.');
         else {
             getUserMobile(mobile);      
-            if (mobile.length < 8) {  
+            if (mobile.length == 8) {  
                 if (!userExist) {                  // IF USER MOBILE NOT IN DATABASE, WRITE FOLLOWING:
                     if (password.length >= 6) {                 // IF PW MEETS LENGTH REQUIREMENTS
                         if (password === confirmPw) {           // IF PW MATCHES
-                            // global.regMobile = mobile;
-                            // global.regPassword = password;
-                            // console.log(global.regPassword);
-                            // global.securityQuestion = securityQuestion;
-                            // global.regAnswer = securityAnswer;                                                            
+                            // regMobile = mobile;
+                            // regPassword = password;
+                            // regQuestionType = securityQuestion;
+                            // regAnswer = securityAnswer;                                                      
                             handleRegistered();  
 
                         } else Alert.alert('Error', 'Passwords do not match. Try again.');
@@ -100,7 +86,7 @@ const RegisterUserScreen = ({navigation}:Props) => {
                 } else Alert.alert('Error', 'Number is registered to an existing account.');
             } else Alert.alert('Error', 'Invalid number.');
         }
-         userExist = null;
+        userExist = null;
         }, 500); 
 
         // Show him the code submission form
@@ -109,17 +95,14 @@ const RegisterUserScreen = ({navigation}:Props) => {
         // The user has submitted the code
         // let result = await textflow.verifyCode("+11234567890", "USER_ENTERED_CODE"); 
         // if result.valid is true, then the phone number is verified. 
-
-        // Implement registration logic here 
-        // update user info into database
-        // if valid format, call handleRegistered to navigate back to login screen to re-login   
     }; 
     
     const handleRegistered = () => { 
         // global.loginVal = false;
         console.log('Registered! Verifying user...');   // REDIRECT TO VERIFICATION PAGE
-        updateUserAnswer(mobile, password, securityQuestion, securityAnswer);
-        navigation.reset({ index: 3, routes: [{ name: 'Verification' }] })
+        writeUserData(mobile, password, securityQuestion, securityAnswer);
+        // console.log(mobile, password, securityQuestion, securityAnswer);
+        navigation.replace('Cycle Savvy');
 	}; 
     
     return ( 
