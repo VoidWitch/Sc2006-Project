@@ -1,12 +1,12 @@
 import { StackNavigationProp } from '@react-navigation/stack/lib/typescript/src/types';
 import React, { useEffect, useState } from 'react'; 
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, KeyboardAvoidingView, Platform, ScrollView } from 'react-native'; 
-import {regMobile} from '../LoginForm/Login';
+import { regMobile } from '../LoginForm/Login';
+
 import { updateUserData } from './../App';
 import { child, get, getDatabase, ref } from 'firebase/database';
 
 type RootStackParamList = {
-	// Add other screens if needed
 	'Cycle Savvy': undefined;
 };
   
@@ -20,46 +20,45 @@ const ChangePwScreen = ({navigation}:Props) => {
     const [newPassword, setNewPassword] = useState(''); 
     const [confirmPassword, setConfirmPassword] = useState('');
     const [mobile, setMobile] = useState('');
+    const [password, setPassword] = useState('');
     
     useEffect(() => {
         const fetchData = async () => {
             const dbRef = ref(getDatabase());
             const snapshot = await get(child(dbRef, `users/${regMobile}`));
-            if (snapshot.exists()) {
+            if (snapshot.exists()) {        // USER EXISTS
                 const userData = snapshot.val();
-                setMobile(userData.mobile);
+                setPassword(userData.password);
+                // console.log({regMobile});
+                const string = {regMobile};
+                setMobile(string.regMobile);        // IGNORE
+                // console.log('User exists ', mobile, password);
             } else {
-                console.log('Error, question not found');
+                console.log('Error, user not found');
             }
         };
-
         fetchData();
     }, []);
 
-    const validateInput = () => { 
-        // Basic validation 
-        if (newPassword !== confirmPassword) { 
-        Alert.alert('Error', 'The new passwords do not match.'); 
-        return false; 
+    const validateInput = () => {
+        if (newPassword.length < 6) {       // MINIMUM PW LENGTH REQUIREMENT
+            Alert.alert('Error', 'Password must be at least 6 characters long.'); 
         }
-        if (newPassword.length < 6) { 
-        Alert.alert('Error', 'Password must be at least 6 characters long.'); 
-        return false; 
+        if (password === newPassword) {
+            Alert.alert('Error', 'Password cannot be the same as the previous one.'); 
         }
-
-        //implement logic here
-        updateUserData(mobile, newPassword);
-        return true;
+        if (newPassword !== confirmPassword) {      // PW DO NOT MATCH
+            Alert.alert('Error', 'The new passwords do not match.'); 
+        }
+        console.log('Changing ', mobile, 'to ', newPassword);
+        updateUserData(mobile, newPassword);        // NEW PW VALIDATED AND UPDATED INTO FIREBASE
+        handleChangePassword();
     }; 
 
     const handleChangePassword = () => { 
-        if (!validateInput()) {     // NEW PW INVALIDATED
-            return; 
-        }
-        // console.log('Changing password for mobile number: ', regMobile); 
-        // Show a success message and navigate to main screen to register upon successful reset 
+        console.log('Password changed successfully!');
         Alert.alert('Success', 'Your password has been changed.');
-        navigation.reset({ index: 7, routes: [{ name: 'Cycle Savvy' }] })
+        navigation.reset({ index: 9, routes: [{ name: 'Cycle Savvy' }] })   // REDIRECT TO MAIN PAGE
     }; 
     
     return ( 
@@ -93,7 +92,7 @@ const ChangePwScreen = ({navigation}:Props) => {
                 value={confirmPassword}
                 maxLength={20}      //max 20 char
             /> 
-            <TouchableOpacity style={styles.button} onPress={handleChangePassword}> 
+            <TouchableOpacity style={styles.button} onPress={validateInput}> 
                 <Text style={styles.buttonText}>Change Password</Text> 
             </TouchableOpacity> 
             </View>
