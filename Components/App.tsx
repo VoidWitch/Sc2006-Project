@@ -3,16 +3,13 @@
 import 'react-native-gesture-handler';    //navigation stack, include at top
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
-import React from 'react';
+import React, { useEffect } from 'react';
 
 // FIREBASE (DATABASE)
 // install firebase to root of project directory, $ npm install firebase
 
 import { initializeApp } from "firebase/app";
-import { getDatabase, ref, set, get, push, update, child } from "firebase/database";
-
-// var loginVal = null;
-// global.loginVal = loginVal;
+import { getDatabase, ref, set, get, push, update, child, remove } from "firebase/database";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBA3SGfDTI94WaJOxp_q0C2r3ypG6UCyj4",
@@ -38,10 +35,16 @@ export function writeUserData(mobile: string, password: string, questionType: st
   });
 }
 
-export function updateUserData (mobile: string, password: string) {
+export function updateUserData(mobile: string, password: string) {
   const db = getDatabase();
-  set(ref(db, 'users/' + mobile), {
+  const userRef = ref(db, 'users/' + mobile);
+  update(userRef, {
     password: password,
+  }).then(() => {
+    console.log(mobile, password);
+    console.log('Password updated successfully.');
+  }).catch((error) => {
+    console.error('Error updating password:', error);
   });
 }
 
@@ -51,14 +54,32 @@ import ResetPw from './ResetPwForm/ResetPw';
 import Verification from './VerificationForm/Verification';
 import RegisterUser from './RegisterUserForm/RegisterUser';
 import Addresses from './AddressesForm/Addresses';
+
 import FAQ from './FAQForm/FAQ';
 import PrivacyConcerns from './PrivacyForm/PrivacyConcerns';
-import Map from './MapForm/Map';
+import Map from './MapForm/Map';    // CHANGE BACK TO MAP LATER THIS IS THE WRONG SCREEN
+import ShareRide from './ShareRideForm/ShareRide'
 import ChangePw from './ChangePwForm/ChangePw';
+
 
 const Stack = createStackNavigator();
 
 function App(): React.JSX.Element {
+
+    // IF WANT TO MAINTAIN USER ENTRIES, COMMENT OUT THIS FUNCTION
+    useEffect(() => {     // DELETE ALL USER ENTRIES WHEN COMPONENT UNMOUNTS
+        return () => {
+            const db = getDatabase();
+            const reference = ref(db, 'users'); // REFERENCE TO USERS NODE TO CLEAR ENTRIES
+            remove(reference).then(() => {
+                console.log('Entries deleted successfully.');
+            })
+            .catch((error) => {
+                console.error('Error deleting entries:', error);
+            });
+        };
+    }, []);
+    
     return (
       <>
         <NavigationContainer>
