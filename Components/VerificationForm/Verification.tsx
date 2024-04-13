@@ -4,7 +4,7 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingVi
 
 import { initializeApp } from "firebase/app";
 import { getDatabase, ref, set, get, push, update, child } from "firebase/database";
-import {regMobile} from '../LoginForm/Login';
+import {regMobile} from './../LoginForm/Login';
 
 const firebaseConfig = {
     apiKey: "AIzaSyBA3SGfDTI94WaJOxp_q0C2r3ypG6UCyj4",
@@ -34,50 +34,49 @@ const PhoneVerificationScreen = ({navigation}:Props) => {
     const [answer, setText] = useState(''); 
     const [securityQuestion, setSecurityQuestion] = useState('');
     const [securityAnswer, setSecurityAnswer] = useState('');
-    // var userProp = {};
 
     useEffect(() => {
         const fetchData = async () => {
             const dbRef = ref(getDatabase());
             const snapshot = await get(child(dbRef, `users/${regMobile}`));
 
-            if (snapshot.exists()) {
+            if (snapshot.exists()) {    // IF USER EXISTS
                 const userData = snapshot.val();
-                setSecurityQuestion(userData.questionType);
+                setSecurityQuestion(userData.questionType);     // RETRIEVE SECURITY QN
             } else {
                 console.log('Error, question not found');
             }
         };
-
         fetchData();
-    }, []); // Run this effect only once after the component mounts
+    }, []);     // RUN WHEN COMPONENT MOUNTS
 
     useEffect(() => {
         const fetchData = async () => {
             const dbRef = ref(getDatabase());
             const snapshot = await get(child(dbRef, `users/${regMobile}`));
 
-            if (snapshot.exists()) {
+            if (snapshot.exists()) {        // SAME FOR RETRIEVAL OF USER SECURITY ANSWER
                 const userData = snapshot.val();
                 setSecurityAnswer(userData.answer);
             } else {
                 console.log('Error, answer not found');
             }
         };
-
         fetchData();
-    }, []); // Run this effect only once after the component mounts
+    }, []);
 
-    const verifyCode = () => {
-        if (answer.toLowerCase() === securityAnswer.toLowerCase())
+    const verifyCode = () => {  // VERIFY SECURITY ANS, IGNORE CASE
+        if (answer.toLowerCase() === securityAnswer.toLowerCase()) {
             handleVerified();
-        else
+        }
+        else {
             Alert.alert('Wrong answer. Please try again.');
+        }
     };
 
     const handleVerified = () => {
         console.log('Logging in...');
-        navigation.replace('Cycle Savvy');
+        navigation.replace('Cycle Savvy');      // REDIRECT TO MAIN PAGE
     }
 
     return (
@@ -99,10 +98,6 @@ const PhoneVerificationScreen = ({navigation}:Props) => {
                 placeholderTextColor="#808080" 
                 onChangeText={newText => setText(newText)}
                 defaultValue={answer}
-                // onChangeText={setCode} 
-                // value={answer} 
-                // onChangeText={}
-                // maxLength={6} 
             /> 
             <TouchableOpacity style={styles.button} onPress={verifyCode}> 
                 <Text style={styles.buttonText}>Submit</Text> 
