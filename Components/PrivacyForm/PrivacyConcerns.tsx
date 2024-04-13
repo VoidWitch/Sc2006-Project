@@ -1,26 +1,24 @@
-import React, { useState } from 'react';
-import { View, ScrollView, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import React from 'react';
+import { View, Text, ScrollView, StyleSheet, StatusBar, TouchableOpacity } from 'react-native';
 
-type PrivacyFAQItemProps = {
-	question: string;
-	answer: string;
+const FAQItem: React.FC<{ question: string; answer: string }> = ({ question, answer }) => {
+    const [isOpen, setIsOpen] = React.useState(false);
+  
+    return (
+        <View style={styles.faqItem}>
+            <TouchableOpacity
+            style={styles.questionContainer}
+            onPress={() => setIsOpen(!isOpen)}
+            >
+            <Text style={styles.questionText}>{question}</Text>
+            </TouchableOpacity>
+            {isOpen && <Text style={styles.answerText}>{answer}</Text>}
+        </View>
+    );
 };
 
-const PrivacyFAQItem: React.FC<PrivacyFAQItemProps> = ({ question, answer }) => {
-	const [isOpen, setIsOpen] = useState(false);
-	
-	return (
-		<View>
-			<TouchableOpacity style={styles.questionContainer} onPress={() => setIsOpen(!isOpen)}>
-				<Text style={styles.questionText}>{question}</Text>
-			</TouchableOpacity>
-			{isOpen && <Text style={styles.answerText}>{answer}</Text>}
-		</View>
-	);
-};
-
-const privacyFaqData = [
-	{
+const faqData = [
+    {
 		question: 'What information do you collect about me?',
 		answer: 'We collect information that you provide to us directly, such as your name, email address, and phone number, as well as information about your usage of our services through tracking technologies like cookies.'
 	},
@@ -48,42 +46,79 @@ const privacyFaqData = [
 	// Add more privacy-related FAQ items as needed 
 ];
 
-const PrivacyConcernsFAQ = () => {
-	return (
-		<ScrollView style={styles.container}>
-			{privacyFaqData.map((faq, index) => (
-				<PrivacyFAQItem key={index} question={faq.question} answer={faq.answer} />
-			))}
-		</ScrollView>
-	);
+const FAQPage = () => {
+    return (
+        <View style={styles.container}>
+        <View style={styles.headerBar}>
+            <Text style={styles.headerText}>Spying on you...?</Text>
+        </View>
+        <ScrollView style={styles.scrollView}>
+            <View style={styles.introduction}>
+            <Text style={styles.introText}>
+                Your information is safe with us!
+            </Text>
+            </View>
+            {faqData.map((faq, index) => (
+            <FAQItem key={index} question={faq.question} answer={faq.answer} />
+            ))}
+        </ScrollView>
+        </View>
+    );
 };
 
 const styles = StyleSheet.create({
-	container: {
-		flex: 1,
-		paddingTop: 20,
-		paddingHorizontal: 10,
-		backgroundColor: '#fff',
-	},
-	questionContainer: {
-		padding: 15,
-		borderBottomWidth: 1,
-		borderBottomColor: '#cccccc',
-	},
-	questionText: {
-		fontSize: 16,
-		fontWeight: 'bold',
-		color: '#333',
-	},
-	answerText: {
-		fontSize: 14,
-		color: '#666',
-		padding: 15,
-		paddingTop: 5,
-		paddingBottom: 20,
-		lineHeight: 22,
-	},
+    container: {
+        flex: 1,
+        backgroundColor: '#fff',
+    },
+    headerBar: {
+        backgroundColor: '#48c289',
+        paddingTop: 20,
+        paddingBottom: 20,
+        alignItems: 'center',
+    },
+    headerText: {
+        color: '#fff',
+        fontSize: 24,
+        fontWeight: 'bold',
+    },
+    scrollView: {
+        padding: 20,
+    },
+    introduction: {
+        marginBottom: 20,
+    },
+    introText: {
+        fontSize: 18,
+        color: '#666',
+        lineHeight: 24,
+    },
+    faqItem: {
+        marginBottom: 10,
+        borderBottomWidth: 1,
+        borderBottomColor: '#cccccc',
+    },
+    questionContainer: {
+        padding: 15,
+        backgroundColor: '#48c289',
+        borderRadius: 5,
+    },
+    questionText: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        color: '#fff',
+    },
+    answerText: {
+        fontSize: 14,
+        color: '#666',
+        padding: 15,
+        paddingTop: 5,
+        paddingBottom: 20,
+        lineHeight: 22,
+        backgroundColor: '#f9f9f9',
+        borderBottomLeftRadius: 5,
+        borderBottomRightRadius: 5,
+    },
 });
 
-export default PrivacyConcernsFAQ;
-
+export default FAQPage;
