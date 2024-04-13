@@ -33,10 +33,11 @@ const GPSMap = ({navigation}:Props) => {
         latitude: 0,
         longitude: 0,
     });
-    const [locationCoordinates, setLocationCoordinates] = useState({
-        latitude: 0,
-        longitude: 0,
-    });
+    const [locationCoordinates, setLocationCoordinates] = useState<{ latitude: number; longitude: number }>();
+
+    useEffect(() => {
+        console.log('Location Coordinates Updated:', locationCoordinates);
+    }, [locationCoordinates]);
 
     useEffect(() => {
         getLocation();      // SHOW INITIAL USER LOCATION WHEN MOUNTING
@@ -167,17 +168,16 @@ const GPSMap = ({navigation}:Props) => {
             </MapView>
 
             {/* SEARCH BAR, FILTER BUTTON, SEARCH BUTTON */}
+            {/* ALLOWS USER TO SEARCH AND SELECT A LOCATION, LOCATION COORDS UPDATED IN const(locationCoordinates) */}
             <View style={styles.searchContainer}>
                 <GooglePlacesAutocomplete
                     placeholder="Search..."
                     onPress={(data, details = null) => {
-                        // 'details' is provided when fetchDetails = true
-                        console.log(data, details);
-                        // Handle location selection here basically storing of location coords in a const
-                        // so handlesearch() can call and display on map.
-
-
-
+                        if (details) {
+                            const { lat, lng } = details.geometry.location as { lat: number; lng: number };
+                            // console.log('Selected Location Coordinates:', lat, lng);
+                            setLocationCoordinates({ latitude: lat, longitude: lng });
+                        }
                     }}
                     query={{
                         key: 'AIzaSyDlRXMUhwmnCmDXpntaFkL66-vI6cMxWrY',
@@ -193,12 +193,6 @@ const GPSMap = ({navigation}:Props) => {
                     }}
                     fetchDetails={true}
                 />
-
-                {/* <TextInput
-                    style={styles.searchBar}
-                    placeholder="Search..."
-                    // Add your onChangeText function to handle search input
-                /> */}
 
                 <TouchableOpacity style={styles.filterButton} onPress={toggleFilterDropdown}>
                     <Image source={require('./FilterLogo.png')} style={styles.filterIcon} resizeMode="contain" />
@@ -269,7 +263,7 @@ const styles = StyleSheet.create({
     },
     map: {
         flex: 1,
-        ...StyleSheet.absoluteFillObject, // Map covers the whole page
+        ...StyleSheet.absoluteFillObject,
     },
     searchContainer: {
         position: 'absolute',
@@ -278,7 +272,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         paddingLeft: 10,
         paddingVertical: 10,
-        backgroundColor: 'transparent', // Adjust this color as needed
+        backgroundColor: 'transparent', 
     },
     searchBar: {
         height: 38,
