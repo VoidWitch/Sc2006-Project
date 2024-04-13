@@ -42,13 +42,73 @@ export function writeUserData(mobile: string, password: string) {
   });
 }
 
-export function updateUserAnswer(mobile: string, password: string, answer: string) {
+export function updateUserAnswer(mobile: string, password: string, question: string, answer: string) {
   const db = getDatabase();
   set(ref(db, 'users/' + mobile), {
     password: password,
+    questionType: question,
     answer: answer
   });
 }
+
+///////////////////////////////////////////////////////
+
+var json = {};
+
+async function handleSearch() {
+  //Constants and api
+  const apiUrl = 'http://datamall2.mytransport.sg/ltaodataservice/BicycleParkingv2';
+  const accKey = 'xvBW6rA6TyGTNQlS8tK0Vg=='
+  const shelterIndicator = "placeholder"; //to be fixed later
+
+  const params = new URLSearchParams({
+      Lat: '1.3521',
+      Long: '103.8198',
+      Dist: '3', // Default radius in kilometers. Can change if needed.
+  });
+
+  // Implementation logic for bicycle search
+  // Call filterSearch and get both filteredResults and searchCoordinates
+  
+  //get a json of the filtered lots based on if got shelter or no shelter
+
+  try {
+      // Make the API request using fetch with the SDK key in the Authorization header
+      const response = await fetch(apiUrl + "?" + params.toString(), {
+        headers: {
+          'AccountKey' : accKey
+        }
+      });
+
+      console.log(await response.json());
+
+      // Check if the request was successful
+      
+      if (!response.ok) {
+          throw new Error('Network response was not ok');
+      }
+
+      // Parse the response as JSON
+      const data = await response.json();
+
+      // Filter the results based on user input
+      const filteredResults = data.value.filter(parkingLot => {
+          return parkingLot.ShelterIndicator === shelterIndicator;
+      });
+
+      // Display the filtered results
+      // console.log("95" + filteredResults);
+
+  } catch (err) {
+    // console.log(err);
+  }
+}
+
+json = handleSearch();
+
+
+////////////////////////////////////////////////////
+
 
 //Component Forms
 import Login from './Components/LoginForm/Login'
