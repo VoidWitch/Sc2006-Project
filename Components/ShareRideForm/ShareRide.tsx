@@ -1,74 +1,48 @@
 import React, { useState, useEffect } from 'react';
-import { View, TextInput, TouchableOpacity, StyleSheet, Alert, Text } from 'react-native';
-import MapView, { Marker } from 'react-native-maps';
-import Geolocation from '@react-native-community/geolocation';
-import Clipboard from '@react-native-clipboard/clipboard';
+import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
+// Uncomment the following line if you're using react-native-maps
+import MapView from 'react-native-maps';
 
-const RideSharingScreen = () => {
-    const [destination, setDestination] = useState('');
-    const [currentLocation, setCurrentLocation] = useState<{ latitude: number; longitude: number; latitudeDelta: number; longitudeDelta: number } | null>(null);
-    const [shareLink, setShareLink] = useState('');
+const ShareRideViewerScreen = () => {
+    // Placeholder state for User A's current and desired locations
+    const [currentLocation, setCurrentLocation] = useState({ lat: 0, lng: 0 });
+    const [destination, setDestination] = useState({ lat: 0, lng: 0 });
 
+    // Simulate fetching real-time location data
     useEffect(() => {
-        fetchCurrentLocation();
+        // Here you would fetch the real-time locations from your backend
+        const fetchLocations = async () => {
+        // Simulated locations
+        setCurrentLocation({ lat: 40.712776, lng: -74.005974 }); // Example: New York
+        setDestination({ lat: 42.360081, lng: -71.058884 }); // Example: Boston
+        };
+
+        fetchLocations();
     }, []);
-
-    const fetchCurrentLocation = () => {
-        Geolocation.getCurrentPosition(
-            (position: { coords: { latitude: number; longitude: number }; }) => {
-                setCurrentLocation({
-                    latitude: position.coords.latitude,
-                    longitude: position.coords.longitude,
-                    latitudeDelta: 0.0922,
-                    longitudeDelta: 0.0421,
-                });
-            },
-            (error: any) => Alert.alert('Error', 'Unable to fetch current location'),
-            { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
-        );
-    };
-
-    const generateShareLink = () => {
-        if (!currentLocation || destination.trim() === '') {
-            Alert.alert('Error', 'Current location or destination is missing');
-            return;
-        }
-        const link = `https://myrideshareapp.com/share?destination=${encodeURIComponent(destination)}&lat=${currentLocation.latitude}&lng=${currentLocation.longitude}`;
-        setShareLink(link);
-    };
-
-    const copyLinkToClipboard = () => {
-        Clipboard.setString(shareLink);
-        Alert.alert('Success', 'Link copied to clipboard!');
-    };
 
     return (
         <View style={styles.container}>
-            {currentLocation && (
-                <MapView
-                    style={styles.map}
-                    initialRegion={currentLocation}
-                    showsUserLocation={true}
-                >
-                    {/* Optional: Marker for destination if you want to show it on the map */}
-                </MapView>
-            )}
-            <View style={styles.bottomPanel}>
-                <TextInput
-                    style={styles.input}
-                    placeholder="Enter destination"
-                    value={destination}
-                    onChangeText={setDestination}
-                />
-                <TouchableOpacity style={styles.button} onPress={generateShareLink}>
-                    <Text style={styles.buttonText}>Generate Share Link</Text>
-                </TouchableOpacity>
-                {shareLink !== '' && (
-                    <TouchableOpacity style={styles.button} onPress={copyLinkToClipboard}>
-                        <Text style={styles.buttonText}>Copy Link</Text>
-                    </TouchableOpacity>
-                )}
-            </View>
+        <View style={styles.container1}>
+            <Text style={styles.header}>ShareRide Location Viewer</Text>
+        </View>
+        {/* Placeholder for the map. Replace with MapView or similar component. */}
+        <View style={styles.mapPlaceholder}>
+            <Text>Map showing real-time locations would be here.</Text>
+            {/* Uncomment and configure the MapView component as needed */}
+            <MapView
+            style={styles.map}
+            initialRegion={{
+                latitude: currentLocation.lat,
+                longitude: currentLocation.lng,
+                latitudeDelta: 0.0922,
+                longitudeDelta: 0.0421,
+            }}
+            >
+            {/* Add markers for current location and destination */}
+            </MapView>
+        </View>
+        <Text style={styles.locationText}>Current Location: Lat {currentLocation.lat}, Lng {currentLocation.lng}</Text>
+        <Text style={styles.locationText}>Destination: Lat {destination.lat}, Lng {destination.lng}</Text>
         </View>
     );
 };
@@ -76,39 +50,37 @@ const RideSharingScreen = () => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        justifyContent: 'center',
         alignItems: 'center',
+        backgroundColor: '#fff',
     },
-    map: {
-        width: '100%',
-        height: '70%',
-    },
-    bottomPanel: {
+    container1: {
+        backgroundColor: '#48c289',
         width: '100%',
         padding: 20,
-        backgroundColor: '#fff',
+        paddingBottom: 10,
+        marginBottom: 20,
+    },
+    header: {
+        color: '#fff',
+        fontSize: 22,
+        fontWeight: 'bold',
+    },
+    mapPlaceholder: {
+        width: Dimensions.get('window').width - 40,
+        height: 200,
+        justifyContent: 'center',
         alignItems: 'center',
+        backgroundColor: '#f0f0f0',
+        borderRadius: 10,
+        marginBottom: 20,
     },
-    input: {
-        height: 40,
-        width: '100%',
-        marginVertical: 10,
-        borderWidth: 1,
-        borderColor: '#ccc',
-        borderRadius: 5,
-        paddingHorizontal: 10,
+    map: {
+        ...StyleSheet.absoluteFillObject, // Map covers the whole page
     },
-    button: {
-        backgroundColor: '#007bff',
-        borderRadius: 5,
-        padding: 10,
-        marginVertical: 10,
-        width: '100%',
-        alignItems: 'center',
-    },
-    buttonText: {
-        color: '#ffffff',
+    locationText: {
+        fontSize: 16,
+        margin: 10,
     },
 });
 
-export default RideSharingScreen;
+export default ShareRideViewerScreen;
