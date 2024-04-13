@@ -61,12 +61,8 @@ const Map = () => {
     const requestPermissions = async () => {
         if (Platform.OS === 'ios') {
             Geolocation.requestAuthorization(
-                (status: string) => {
-                    if (status === 'granted') {
-                        getCurrentLocation();
-                    } else {
-                        Alert.alert('Permission Denied', 'Cannot access location');
-                    }
+                () => { // Modify this line, remove the argument 'status'
+                    getCurrentLocation();
                 },
                 (error: any) => {
                     console.log(error);
@@ -77,7 +73,7 @@ const Map = () => {
             const rationale = {
                 title: 'Location Permission',
                 message: 'This app needs access to your location.',
-                buttonPositive: 'OK' // Add buttonPositive property here
+                buttonPositive: 'OK'
             };
     
             const granted = await PermissionsAndroid.request(
@@ -92,6 +88,7 @@ const Map = () => {
             }
         }
     };
+    
 
     return (
         <View style={styles.container}>
