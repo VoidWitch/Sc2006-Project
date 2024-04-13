@@ -6,7 +6,6 @@ import { writeUserData } from './../App';
 
 import { initializeApp } from "firebase/app";
 import { getDatabase, ref, set, get, push, update, child } from "firebase/database";
-// import { updateCurrentUser } from 'firebase/auth';
 
 const firebaseConfig = {
     apiKey: "AIzaSyBA3SGfDTI94WaJOxp_q0C2r3ypG6UCyj4",
@@ -23,7 +22,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 
 type RootStackParamList = {
-    'Cycle Savvy': undefined;	    // REGISTER WILL REDIRECT USER TO VERIFICATION PAGE
+    'Login': undefined;	    // REGISTER WILL REDIRECT USER TO VERIFICATION PAGE
 };
   
 type ScreenNavigationProp = StackNavigationProp<RootStackParamList>;
@@ -41,12 +40,8 @@ const RegisterUserScreen = ({navigation}:Props) => {
     const [securityQuestion, setSecurityQuestion] = useState('Select a security question.');
     const [securityAnswer, setSecurityAnswer] = useState('');
 
-    var userExist: null = null;
-    // var mobileCount = 0;
+    var userExist: boolean | null = null;
 
-    // const countChar = () => {
-    //     mobileCount++;
-    // }
     const toggleDropdown = () => {
         setShowDropdown(!showDropdown);
     };
@@ -66,25 +61,27 @@ const RegisterUserScreen = ({navigation}:Props) => {
     }
     
     const registerUser = () => { 
+        getUserMobile(mobile);
+
         setTimeout(function() {
         if (!mobile || !password || !confirmPw || securityQuestion === "Select a security question." || !securityAnswer)      // IF ALL FIELDS ARE FILLED, CHECK FOR
             Alert.alert('Error', 'There cannot be an empty field.');
         else {
-            getUserMobile(mobile);      
-            if (mobile.length == 8) {  
-                if (!userExist) {                  // IF USER MOBILE NOT IN DATABASE, WRITE FOLLOWING:
-                    if (password.length >= 6) {                 // IF PW MEETS LENGTH REQUIREMENTS
-                        if (password === confirmPw) {           // IF PW MATCHES
-                            // regMobile = mobile;
-                            // regPassword = password;
-                            // regQuestionType = securityQuestion;
-                            // regAnswer = securityAnswer;                                                      
-                            handleRegistered();  
-
-                        } else Alert.alert('Error', 'Passwords do not match. Try again.');
-                    } else Alert.alert('Error', 'Password must be at least 6 characters long.');
-                } else Alert.alert('Error', 'Number is registered to an existing account.');
-            } else Alert.alert('Error', 'Invalid number.');
+            if (userExist){
+                Alert.alert('Error', 'Number is registered to an existing account.')
+            }
+            else if (mobile.length !== 8) {
+                Alert.alert('Error', 'Invalid number.');
+            }
+            else if (password.length < 6) {
+                Alert.alert('Error', 'Password must be at least 6 characters long.');
+            }
+            else if (password !== confirmPw) {
+                Alert.alert('Error', 'Passwords do not match. Try again.');
+            }
+            else {           
+                handleRegistered(); 
+            }
         }
         userExist = null;
         }, 500); 
@@ -98,11 +95,9 @@ const RegisterUserScreen = ({navigation}:Props) => {
     }; 
     
     const handleRegistered = () => { 
-        // global.loginVal = false;
         console.log('Registered! Verifying user...');   // REDIRECT TO VERIFICATION PAGE
         writeUserData(mobile, password, securityQuestion, securityAnswer);
-        // console.log(mobile, password, securityQuestion, securityAnswer);
-        navigation.replace('Cycle Savvy');
+        navigation.replace('Login');        // REDIRECT TO LOGIN PAGE
 	}; 
     
     return ( 
@@ -127,9 +122,6 @@ const RegisterUserScreen = ({navigation}:Props) => {
                 onChangeText={setMobile} 
                 value={mobile}
                 maxLength={8}
-                // onChange={countChar}
-                // onChange={count => countChar(count)}
-                // {newText => setText(newText)}
             /> 
             <TextInput 
                 style={styles.input} 
