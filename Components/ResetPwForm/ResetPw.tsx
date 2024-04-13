@@ -4,12 +4,7 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, KeyboardAvo
 
 import { initializeApp } from "firebase/app";
 import { getDatabase, ref, set, get, push, update, child } from "firebase/database";
-
-import Toast from 'react-native-toast-message';
-
-import regAnswer from '../RegisterUserForm/RegisterUser'
-
-import { updateUserAnswer } from '../../App';
+import { updateUserData } from './../App';
 
 const firebaseConfig = {
     apiKey: "AIzaSyBA3SGfDTI94WaJOxp_q0C2r3ypG6UCyj4",
@@ -22,12 +17,11 @@ const firebaseConfig = {
     measurementId: "G-3WGYQ5T50W"
   };
   
-  // Initialize Firebase
-  const app = initializeApp(firebaseConfig);
+// INITIALIZE FIREBASE
+const app = initializeApp(firebaseConfig);
 
 type RootStackParamList = {
-    // Add other screens if needed
-    'Login': undefined;	    // after successful -> go to login screen
+    'Login': undefined;
 };
   
 type ScreenNavigationProp = StackNavigationProp<RootStackParamList>;
@@ -41,111 +35,44 @@ const ResetPasswordScreen = ({navigation}:Props) => {
     const [newPassword, setNewPassword] = useState(''); 
     const [confirmPassword, setConfirmPassword] = useState(''); 
 
-    var userExist = null;
-    var userProp = {};
+    var userExist: boolean | null = null;
 
-    const getUserMobile = (mobile: string) => {
-        const dbRef = ref(getDatabase());
-        get(child(dbRef, `users/${mobile}`)).then((snapshot) => {
-          if (snapshot.exists()) {
-            userExist = true;
-          } else {
-            userExist = false;
-          }
-        });
-      }
-
-    const getUserPassword = (mobile: string) => {
-        const dbRef = ref(getDatabase());
-        get(child(dbRef, `users/${mobile}`)).then((snapshot) => {
-            if (snapshot.exists()) {
-                userProp = snapshot.val();
-                // console.log(userProp.password);
-            }
-        });
-    }
-    
-    const validateInput = () => { 
-        // Basic validation 
-        /*
-        if (newPassword !== confirmPassword) { 
-        Alert.alert('Error', 'The new passwords do not match.'); 
-        return false; 
-        }
-        if (newPassword.length < 6) { 
-        Alert.alert('Error', 'Password must be at least 6 characters long.'); 
-        return false; 
-        }*/
-
-        //implement logic here
-        // Here you would send the request to your backend to reset the password 
-        // For example: updatePassword(mobile, newPassword)
-
-        getUserMobile(mobile);
-        getUserPassword(mobile);
-
-        setTimeout(function() {
-            if (userExist) {
-
-                // OBTAIN ANSWER FROM ACCOUNT
-
-                if (newPassword === confirmPassword) {
-
-                    updateUserAnswer(mobile, newPassword, userProp.answer);
-
-                    navigation.reset({ index: 0, routes: [{ name: 'Login' }] })
-
-                    return true;
-
-                } else {
-                    const showToast = () => { // show a toast message (android)
-                        Toast.show({
-                        type: 'error',
-                        text1: 'Passwords do not match. Try again.',
-                        text1Style: {
-                            fontSize:15
-                        }
-                        });
-                    }
-    
-                    showToast();
-    
-                    return false;
-                }
-
+    const getUserData = (mobile: string) => {
+        const fetchData = async () => {
+            const dbRef = ref(getDatabase());
+            const snapshot = await get(child(dbRef, `users/${mobile}`));
+            if (snapshot.exists()) {    // IF USER EXISTS
+                userExist = true;
             } else {
-                const showToast = () => { // show a toast message (android)
-                    Toast.show({
-                    type: 'error',
-                    text1: 'No account found.',
-                    text1Style: {
-                        fontSize:15
-                    }
-                    });
-                }
+                console.log('Error, user not found');
+            }
+        };
+        fetchData();
+    }
 
-                showToast();
-
-                return false;
+    const validateInput = () => {
+        getUserData(mobile);
+        setTimeout(function() {
+            if (!userExist) {        // IF USER DOES NOT EXIT
+                Alert.alert('Error', 'No existing user.');
+            }
+            else if (newPassword.length < 6) {      // PW DOES NOT MEET MINIMUM REQUIREMENTS
+                Alert.alert('Error', 'Password must be at least 6 characters long.');
+            }
+            else if (newPassword !== confirmPassword) {
+                Alert.alert('Error', 'The new passwords do not match.');
+            }
+            else {
+                updateUserData(mobile, newPassword);
+                handleResetPassword();
             }
         }, 500);
-        
-        // return true;
-    }; 
+        userExist = null;
+    }
 
-    const handleResetPassword = () => { 
-        
-        if (validateInput()) {  
-            
-            navigation.reset({ index: 0, routes: [{ name: 'Login' }] })
-
-        }
-        
-        // console.log('Resetting password for mobile number: ', mobile); 
-
-        // Show a success message and navigate to main screen to register upon successful reset 
-        // Alert.alert('Success', 'Your password has been reset. Please log in with your new password.');
-
+    const handleResetPassword = () => {
+        Alert.alert('Success', 'Your password has been reset. Please log in with your new password.');
+        navigation.reset({ index: 0, routes: [{ name: 'Login' }] })     // REDIRECT TO LOGIN PAGE
     }; 
     
     return ( 
@@ -188,7 +115,7 @@ const ResetPasswordScreen = ({navigation}:Props) => {
                 value={confirmPassword}
                 maxLength={20}      //max 20 char
             /> 
-            <TouchableOpacity style={styles.button} onPress={handleResetPassword}> 
+            <TouchableOpacity style={styles.button} onPress={validateInput}> 
                 <Text style={styles.buttonText}>Reset Password</Text> 
             </TouchableOpacity> 
             </View>

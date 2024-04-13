@@ -1,24 +1,15 @@
 //  AIzaSyDlRXMUhwmnCmDXpntaFkL66-vI6cMxWrY   -- Google Maps API key
 
-import Toast from 'react-native-toast-message';
-
 import 'react-native-gesture-handler';    //navigation stack, include at top
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
-import React from 'react';
-import type {PropsWithChildren} from 'react';
-
+import React, { useEffect } from 'react';
 
 // FIREBASE (DATABASE)
-
 // install firebase to root of project directory, $ npm install firebase
 
 import { initializeApp } from "firebase/app";
-import { getDatabase, ref, set, get, push, update, child } from "firebase/database";
-import { mobile } from './Components/LoginForm/Login';
-
-var loginVal = null;
-global.loginVal = loginVal;
+import { getDatabase, ref, set, get, push, update, child, remove } from "firebase/database";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBA3SGfDTI94WaJOxp_q0C2r3ypG6UCyj4",
@@ -34,41 +25,61 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
-export function writeUserData(mobile: string, password: string) {
+export function writeUserData(mobile: string, password: string, questionType: string, answer: string) {
   const db = getDatabase();
   const reference = ref(db, 'users/' + mobile);
   set(reference, {
-    password: password
+    password: password,
+    questionType : questionType,
+    answer: answer,
   });
 }
 
-export function updateUserAnswer(mobile: string, password: string, answer: string) {
+export function updateUserData(mobile: string, password: string) {
   const db = getDatabase();
-  set(ref(db, 'users/' + mobile), {
+  const userRef = ref(db, 'users/' + mobile);
+  update(userRef, {
     password: password,
-    answer: answer
+  }).then(() => {
+    console.log(mobile, password);
+    console.log('Password updated successfully.');
+  }).catch((error) => {
+    console.error('Error updating password:', error);
   });
 }
 
 //Component Forms
-import Login from './Components/LoginForm/Login'
-import ResetPw from './Components/ResetPwForm/ResetPw';
-import Verification from './Components/VerificationForm/Verification';
-import RegisterUser from './Components/RegisterUserForm/RegisterUser';
-import Addresses from './Components/AddressesForm/Addresses';
-import FAQ from './Components/FAQForm/FAQ';
-import PrivacyConcerns from './Components/PrivacyForm/PrivacyConcerns';
-import Map from './Components/MapForm/Map';
-import ChangePw from './Components/ChangePwForm/ChangePw';
-import { sendPasswordResetEmail } from 'firebase/auth';
+import Login from './LoginForm/Login'
+import ResetPw from './ResetPwForm/ResetPw';
+import Verification from './VerificationForm/Verification';
+import RegisterUser from './RegisterUserForm/RegisterUser';
+import Addresses from './AddressesForm/Addresses';
+
+import FAQ from './FAQForm/FAQ';
+import PrivacyConcerns from './PrivacyForm/PrivacyConcerns';
+import Map from './MapForm/Map';    // CHANGE BACK TO MAP LATER THIS IS THE WRONG SCREEN
+import ShareRide from './ShareRideForm/ShareRide'
+import ChangePw from './ChangePwForm/ChangePw';
+
 
 const Stack = createStackNavigator();
 
-// type SectionProps = PropsWithChildren<{
-//     title: string;
-// }>;
-
 function App(): React.JSX.Element {
+
+    // IF WANT TO MAINTAIN USER ENTRIES, COMMENT OUT THIS FUNCTION
+    useEffect(() => {     // DELETE ALL USER ENTRIES WHEN COMPONENT UNMOUNTS
+        return () => {
+            const db = getDatabase();
+            const reference = ref(db, 'users'); // REFERENCE TO USERS NODE TO CLEAR ENTRIES
+            remove(reference).then(() => {
+                console.log('Entries deleted successfully.');
+            })
+            .catch((error) => {
+                console.error('Error deleting entries:', error);
+            });
+        };
+    }, []);
+    
     return (
       <>
         <NavigationContainer>
@@ -85,7 +96,6 @@ function App(): React.JSX.Element {
             <Stack.Screen name="Cycle Savvy" component={Map} options={{ headerShown: false }} />
             </Stack.Navigator>
         </NavigationContainer>
-        <Toast/>
       </>
     );
 }

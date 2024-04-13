@@ -1,14 +1,12 @@
 import { StackNavigationProp } from '@react-navigation/stack/lib/typescript/src/types';
-import React, { useState } from 'react'; 
-import { View, Text, TouchableOpacity, StyleSheet, Image, KeyboardAvoidingView, Platform, ScrollView, TextInput, Alert } from 'react-native'; 
+import React, { useState } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Image, KeyboardAvoidingView, Platform, ScrollView, TextInput, Alert } from 'react-native';
 
 import { initializeApp } from "firebase/app";
 import { getDatabase, ref, set, get, push, update, child } from "firebase/database";
 
-// import loginVal from './../App';
-// import regMobile from '../RegisterUserForm/RegisterUser'
-// import regPassword from '../RegisterUserForm/RegisterUser'
-// import regAnswer from '../RegisterUserForm/RegisterUser'
+export var regMobile = null;
+export var regPassword = null;
 
 const firebaseConfig = {
 	apiKey: "AIzaSyBA3SGfDTI94WaJOxp_q0C2r3ypG6UCyj4",
@@ -29,121 +27,133 @@ type RootStackParamList = {
 	'Verification': undefined;		// LOGIN REDIRECTS TO VERIFICATION SCREEN
 	'Register User': undefined;		// REGISTER NEW USER SCREEN
 };
-  
+
 type ScreenNavigationProp = StackNavigationProp<RootStackParamList>;
-  
+
 interface Props {
 	navigation: ScreenNavigationProp;
 }
-  
-const LoginScreen = ({navigation}:Props) => { 
-	const [mobile, setMobile] = useState('');
-	const [inputPassword, setText] = useState(''); 
 
-	var userExist = null;
-	var userProp = {};
-
-	const getUserMobile = (mobile: string) => {
-        const dbRef = ref(getDatabase());
-        get(child(dbRef, `users/${mobile}`)).then((snapshot) => {
-			if (snapshot.exists()) 
-				userExist = true;
-			else 
-				userExist = false;
-		});
-      }
-
-	const getUserPassword = (mobile: string) => {
+const getUserMobile = (mobile: string): Promise<string | null> => {
+	return new Promise((resolve, reject) => {
 		const dbRef = ref(getDatabase());
 		get(child(dbRef, `users/${mobile}`)).then((snapshot) => {
 			if (snapshot.exists()) {
-				userProp = snapshot.val();
-				// console.log(userProp.password);
+				resolve(mobile);
+			} else {
+				resolve(null);		// OR RESOLVE(UNDEFINED)
 			}
+		}).catch((error) => {
+			console.error('Error checking user existence:', error);
+			reject(error);
 		});
-	}
-	
-	const handleLogin = () => { 
-		// console.log(global.loginVal);
-		// global.loginVal = true;
+	});
+}
 
-        setTimeout(function() {
+const getUserPassword = (mobile: string): Promise<string | null> => {
+	return new Promise((resolve, reject) => {
+		const dbRef = ref(getDatabase());
+		get(child(dbRef, `users/${mobile}`)).then((snapshot) => {
+			if (snapshot.exists()) {
+				const userData = snapshot.val();
+				const password = userData.password;
+				resolve(password);
+			} else {
+				resolve(null);
+			}
+		}).catch((error) => {
+			reject(error);
+		});
+	});
+}
+
+const LoginScreen = ({ navigation }: Props) => {
+	const [mobile, setMobile] = useState('');
+	const [inputPassword, setText] = useState('');
+
+	const handleLogin = () => {
+		setTimeout(function () {
 			// CHECK FOR EMPTY FIELDS
-            if (!mobile || !inputPassword) {		// IF BOTH FIELDS ARE FILLED, CHECK FOR
-				Alert.alert('Error', 'There cannot be an empty field.'); }
+			if (!mobile || !inputPassword) {		// IF BOTH FIELDS ARE FILLED, CHECK FOR
+				Alert.alert('Error', 'There cannot be an empty field.');
+			}
 			else {
-				getUserMobile(mobile);
-                if (userExist) {      							// IF USER EXISTS, CHECK FOR
-					getUserPassword(mobile);
-
-                    if (userProp.password === inputPassword) {  // IF PW MATCHES
-                        // global.regMobile = mobile;
-						// global.regPassword = inputPassword;
-						console.log('Verifying user...');
-						navigation.replace('Verification');
- 
-                    } else Alert.alert('Error', 'Incorrect password. Try again.');
-                } else Alert.alert('Error', 'No account found.');
-            }
-            userExist = null;
-        }, 500); 
+				getUserMobile(mobile).then((mobile) => {
+					if (mobile) {		// IF USER EXISTS
+						console.log('User exists with mobile number:', mobile);
+						getUserPassword(mobile).then((password) => {
+							if (password === inputPassword) {		// IF PW CORRECT
+								console.log('Password matches');
+								regMobile = mobile;		// USER LOGIN MOBILE
+								regPassword = password;	// USER LOGIN PW
+								navigation.replace('Verification');	// REDIRECT TO VERIFICATION PAGE
+							} else {
+								Alert.alert('Error', 'Incorrect password. Try again.');
+							}
+						})
+					} else {
+						Alert.alert('Error', 'No account found.');
+					}
+				})
+			}
+		}, 500);
 	};
-	
+
 	const handleResetPassword = () => {
-		console.log('Resetting password...'); 
+		console.log('Resetting password...');
 		navigation.navigate('Reset Password');		// NAVIGATE TO RESET PW INTERFACE
-	}; 
-	
+	};
+
 	const handleRegisterUser = () => {
 		console.log('Registering user...');
 		navigation.navigate('Register User');		// NAVIGATE TO REGISTRATION INTERFACE
 	};
- 
-	return ( 
-		<KeyboardAvoidingView 
-		style={{ flex: 1 }} 
-		behavior={Platform.OS === "ios" ? "padding" : "height"} 
-		keyboardVerticalOffset={Platform.OS === "ios" ? 100 : 100} 
-		> 
-		<ScrollView contentContainerStyle={{ flexGrow: 1 }}> 
-			<View style={styles.container}> 
-			<View style={styles.container1}> 
-				<Text style={styles.header}>Welcome Back!</Text>
-			</View>  
-			<Image source={require('./CycleLogo.png')} style={styles.image} /> 
-			<Text style={styles.action}>Login:</Text> 
-			<TextInput 
-				style={styles.input} 
-				placeholder="Mobile Number" 
-				placeholderTextColor="#808080" 
-				keyboardType="number-pad" 
-				onChangeText={setMobile} 
-				value={mobile}
-				maxLength={8}
-			/> 
-			<TextInput 
-				style={styles.input} 
-				placeholder="Password" 
-				placeholderTextColor="#808080" 
-				secureTextEntry 
-				maxLength={20}		// 20 CHAR MAX
-				onChangeText={setText}
-                defaultValue={inputPassword}
-			/> 
-			<TouchableOpacity style={styles.registerbutton} onPress={handleRegisterUser}> 
-				<Text style={styles.registerbuttonText}>No account? Register here</Text> 
-			</TouchableOpacity> 
-			<TouchableOpacity style={styles.button} onPress={handleLogin}> 
-				<Text style={styles.buttonText}>Login</Text> 
-			</TouchableOpacity> 
-			<TouchableOpacity style={styles.resetbutton} onPress={handleResetPassword}> 
-				<Text style={styles.resetbuttonText}>Forgot your password?</Text> 
-			</TouchableOpacity> 
-			</View> 
-		</ScrollView> 
-		</KeyboardAvoidingView> 
-	); 
-}; 
+
+	return (
+		<KeyboardAvoidingView
+			style={{ flex: 1 }}
+			behavior={Platform.OS === "ios" ? "padding" : "height"}
+			keyboardVerticalOffset={Platform.OS === "ios" ? 100 : 100}
+		>
+			<ScrollView contentContainerStyle={{ flexGrow: 1 }}>
+				<View style={styles.container}>
+					<View style={styles.container1}>
+						<Text style={styles.header}>Welcome Back!</Text>
+					</View>
+					<Image source={require('./CycleLogo.png')} style={styles.image} />
+					<Text style={styles.action}>Login:</Text>
+					<TextInput
+						style={styles.input}
+						placeholder="Mobile Number"
+						placeholderTextColor="#808080"
+						keyboardType="number-pad"
+						onChangeText={setMobile}
+						value={mobile}
+						maxLength={8}
+					/>
+					<TextInput
+						style={styles.input}
+						placeholder="Password"
+						placeholderTextColor="#808080"
+						secureTextEntry
+						maxLength={20}		// 20 CHAR MAX
+						onChangeText={setText}
+						defaultValue={inputPassword}
+					/>
+					<TouchableOpacity style={styles.registerbutton} onPress={handleRegisterUser}>
+						<Text style={styles.registerbuttonText}>No account? Register here</Text>
+					</TouchableOpacity>
+					<TouchableOpacity style={styles.button} onPress={handleLogin}>
+						<Text style={styles.buttonText}>Login</Text>
+					</TouchableOpacity>
+					<TouchableOpacity style={styles.resetbutton} onPress={handleResetPassword}>
+						<Text style={styles.resetbuttonText}>Forgot your password?</Text>
+					</TouchableOpacity>
+				</View>
+			</ScrollView>
+		</KeyboardAvoidingView>
+	);
+};
 
 const styles = StyleSheet.create({
 	container: {
@@ -160,12 +170,12 @@ const styles = StyleSheet.create({
 		paddingBottom: 10,
 		marginBottom: 50,
 	},
-  	header: {
+	header: {
 		color: '#fff',
 		fontSize: 28,
 		fontWeight: 'bold',
 		marginBottom: 20,
-  	},
+	},
 	imagetitle: {
 		color: '#000',
 		fontStyle: 'italic',
@@ -236,4 +246,3 @@ const styles = StyleSheet.create({
 });
 
 export default LoginScreen;
-export const mobile = "mobile";
