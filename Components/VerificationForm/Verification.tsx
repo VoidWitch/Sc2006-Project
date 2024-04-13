@@ -33,16 +33,24 @@ interface Props {
 const PhoneVerificationScreen = ({navigation}:Props) => { 
     const [answer, setText] = useState(''); 
     const [securityQuestion, setSecurityQuestion] = useState('');
+    useEffect(() => {
+        console.log('Security question fetched.', securityQuestion);
+    }, [securityQuestion]);
     const [securityAnswer, setSecurityAnswer] = useState('');
+    useEffect(() => {
+        console.log('Security answer fetched.', securityAnswer);
+    }, [securityAnswer]);
 
     useEffect(() => {
         const fetchData = async () => {
+            console.log({regMobile});
             const dbRef = ref(getDatabase());
             const snapshot = await get(child(dbRef, `users/${regMobile}`));
 
             if (snapshot.exists()) {    // IF USER EXISTS
                 const userData = snapshot.val();
                 setSecurityQuestion(userData.questionType);     // RETRIEVE SECURITY QN
+                // console.log('works', userData.questionType, securityQuestion);
             } else {
                 console.log('Error, question not found');
             }
