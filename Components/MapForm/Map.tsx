@@ -33,6 +33,10 @@ const GPSMap = ({navigation}:Props) => {
         latitude: 0,
         longitude: 0,
     });
+    const [locationCoordinates, setLocationCoordinates] = useState({
+        latitude: 0,
+        longitude: 0,
+    });
 
     useEffect(() => {
         getLocation();      // SHOW INITIAL USER LOCATION WHEN MOUNTING
@@ -110,7 +114,9 @@ const GPSMap = ({navigation}:Props) => {
     // BICYCLE LOT IMPLEMENTATIONS
     const handleSearch = () => {
         // Implementation logic for bicycle search
-        // Get user input location -> convert to coordinates and compare with bicycle lots
+        // Get user input location -> convert to coordinates and compare with bicycle lots (if selected location coordinates is empty)
+
+        // get selected location input and compare with API coords, and display selected location and bike lots.
     };
 
     const displayLots = () => {
@@ -167,7 +173,11 @@ const GPSMap = ({navigation}:Props) => {
                     onPress={(data, details = null) => {
                         // 'details' is provided when fetchDetails = true
                         console.log(data, details);
-                        // Handle location selection here
+                        // Handle location selection here basically storing of location coords in a const
+                        // so handlesearch() can call and display on map.
+
+
+
                     }}
                     query={{
                         key: 'AIzaSyDlRXMUhwmnCmDXpntaFkL66-vI6cMxWrY',
@@ -263,16 +273,15 @@ const styles = StyleSheet.create({
     },
     searchContainer: {
         position: 'absolute',
-        width: '95%',
+        width: '88%',
         flexDirection: 'row',
         alignItems: 'center',
         paddingLeft: 10,
-        paddingRight: 25,
         paddingVertical: 10,
         backgroundColor: 'transparent', // Adjust this color as needed
     },
     searchBar: {
-        height: 40,
+        height: 38,
         width: '88%',
         backgroundColor: 'white',
         borderRadius: 5,
@@ -333,7 +342,7 @@ const styles = StyleSheet.create({
     checkedBox: {
         backgroundColor: '#000',
     },
-    searchButton: {
+    searchButton: { 
         padding: 10,
         backgroundColor: 'rgba(255, 255, 255, 0.5)',
     },
