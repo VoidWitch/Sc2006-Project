@@ -5,16 +5,8 @@ import { View, Text, TouchableOpacity, StyleSheet, Image, KeyboardAvoidingView, 
 import { initializeApp } from "firebase/app";
 import { getDatabase, ref, set, get, push, update, child } from "firebase/database";
 
-// import loginVal from './../App';
-// import regMobile from '../RegisterUserForm/RegisterUser'
-// import regPassword from '../RegisterUserForm/RegisterUser'
-// import regAnswer from '../RegisterUserForm/RegisterUser'
-// global.regMobile = null;
-
 export var regMobile = null;
 export var regPassword = null;
-export var regQuestionType = null;
-export var regAnswer = null;
 
 const firebaseConfig = {
 	apiKey: "AIzaSyBA3SGfDTI94WaJOxp_q0C2r3ypG6UCyj4",
@@ -49,7 +41,7 @@ const getUserMobile = (mobile: string): Promise<string | null> => {
 			if (snapshot.exists()) {
 				resolve(mobile);
 			} else {
-				resolve(null); // or resolve(undefined);
+				resolve(null);		// OR RESOLVE(UNDEFINED)
 			}
 		}).catch((error) => {
 			console.error('Error checking user existence:', error);
@@ -64,13 +56,13 @@ const getUserPassword = (mobile: string): Promise<string | null> => {
 		get(child(dbRef, `users/${mobile}`)).then((snapshot) => {
 			if (snapshot.exists()) {
 				const userData = snapshot.val();
-				const password = userData.password; // Assuming password is stored under 'password' key
+				const password = userData.password;
 				resolve(password);
 			} else {
-				resolve(null); // Resolve with null if user does not exist
+				resolve(null);
 			}
 		}).catch((error) => {
-			reject(error); // Reject the promise if there's an error fetching data from Firebase
+			reject(error);
 		});
 	});
 }
@@ -78,14 +70,8 @@ const getUserPassword = (mobile: string): Promise<string | null> => {
 const LoginScreen = ({ navigation }: Props) => {
 	const [mobile, setMobile] = useState('');
 	const [inputPassword, setText] = useState('');
-	// var userExist: boolean | null = null;
-	// var userProp = {};
 
 	const handleLogin = () => {
-		// console.log(global.loginVal);
-		// global.loginVal = true;
-		// console.log(getUserMobile(mobile), getUserPassword(mobile), getUserSecurityQuestion(mobile), getUserSecurityAnswer(mobile));
-
 		setTimeout(function () {
 			// CHECK FOR EMPTY FIELDS
 			if (!mobile || !inputPassword) {		// IF BOTH FIELDS ARE FILLED, CHECK FOR
@@ -93,14 +79,14 @@ const LoginScreen = ({ navigation }: Props) => {
 			}
 			else {
 				getUserMobile(mobile).then((mobile) => {
-					if (mobile) {
+					if (mobile) {		// IF USER EXISTS
 						console.log('User exists with mobile number:', mobile);
 						getUserPassword(mobile).then((password) => {
-							if (password === inputPassword) {
+							if (password === inputPassword) {		// IF PW CORRECT
 								console.log('Password matches');
-								regMobile = mobile;		//necessary
-								regPassword = inputPassword;	//necessary
-								navigation.replace('Verification');
+								regMobile = mobile;		// USER LOGIN MOBILE
+								regPassword = password;	// USER LOGIN PW
+								navigation.replace('Verification');	// REDIRECT TO VERIFICATION PAGE
 							} else {
 								Alert.alert('Error', 'Incorrect password. Try again.');
 							}
@@ -108,9 +94,7 @@ const LoginScreen = ({ navigation }: Props) => {
 					} else {
 						Alert.alert('Error', 'No account found.');
 					}
-				})/*.catch((error) => {
-					console.error('Error:', error);
-				});*/
+				})
 			}
 		}, 500);
 	};
