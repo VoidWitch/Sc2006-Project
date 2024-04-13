@@ -33,45 +33,25 @@ interface Props {
 const PhoneVerificationScreen = ({navigation}:Props) => { 
     const [answer, setText] = useState(''); 
     const [securityQuestion, setSecurityQuestion] = useState('');
-    useEffect(() => {
-        console.log('Security question fetched.', securityQuestion);
-    }, [securityQuestion]);
     const [securityAnswer, setSecurityAnswer] = useState('');
-    useEffect(() => {
-        console.log('Security answer fetched.', securityAnswer);
-    }, [securityAnswer]);
-
-    useEffect(() => {
-        const fetchData = async () => {
-            console.log({regMobile});
-            const dbRef = ref(getDatabase());
-            const snapshot = await get(child(dbRef, `users/${regMobile}`));
-
-            if (snapshot.exists()) {    // IF USER EXISTS
-                const userData = snapshot.val();
-                setSecurityQuestion(userData.questionType);     // RETRIEVE SECURITY QN
-                // console.log('works', userData.questionType, securityQuestion);
-            } else {
-                console.log('Error, question not found');
-            }
-        };
-        fetchData();
-    }, []);     // RUN WHEN COMPONENT MOUNTS
 
     useEffect(() => {
         const fetchData = async () => {
             const dbRef = ref(getDatabase());
             const snapshot = await get(child(dbRef, `users/${regMobile}`));
-
-            if (snapshot.exists()) {        // SAME FOR RETRIEVAL OF USER SECURITY ANSWER
+    
+            if (snapshot.exists()) {
                 const userData = snapshot.val();
+                setSecurityQuestion(userData.questionType);
                 setSecurityAnswer(userData.answer);
+                console.log(userData);
             } else {
-                console.log('Error, answer not found');
+                console.log('Error, user data not found');
             }
         };
         fetchData();
     }, []);
+    
 
     const verifyCode = () => {  // VERIFY SECURITY ANS, IGNORE CASE
         if (answer.toLowerCase() === securityAnswer.toLowerCase()) {
