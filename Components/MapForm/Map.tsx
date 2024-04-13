@@ -33,6 +33,11 @@ const GPSMap = ({navigation}:Props) => {
         latitude: 0,
         longitude: 0,
     });
+    const [locationCoordinates, setLocationCoordinates] = useState<{ latitude: number; longitude: number }>();
+
+    useEffect(() => {
+        console.log('Location Coordinates Updated:', locationCoordinates);
+    }, [locationCoordinates]);
 
     useEffect(() => {
         getLocation();      // SHOW INITIAL USER LOCATION WHEN MOUNTING
@@ -110,7 +115,9 @@ const GPSMap = ({navigation}:Props) => {
     // BICYCLE LOT IMPLEMENTATIONS
     const handleSearch = () => {
         // Implementation logic for bicycle search
-        // Get user input location -> convert to coordinates and compare with bicycle lots
+        // Get user input location -> convert to coordinates and compare with bicycle lots (if selected location coordinates is empty)
+
+        // get selected location input and compare with API coords, and display selected location and bike lots.
     };
 
     const displayLots = () => {
@@ -161,13 +168,16 @@ const GPSMap = ({navigation}:Props) => {
             </MapView>
 
             {/* SEARCH BAR, FILTER BUTTON, SEARCH BUTTON */}
+            {/* ALLOWS USER TO SEARCH AND SELECT A LOCATION, LOCATION COORDS UPDATED IN const(locationCoordinates) */}
             <View style={styles.searchContainer}>
                 <GooglePlacesAutocomplete
                     placeholder="Search..."
                     onPress={(data, details = null) => {
-                        // 'details' is provided when fetchDetails = true
-                        console.log(data, details);
-                        // Handle location selection here
+                        if (details) {
+                            const { lat, lng } = details.geometry.location as { lat: number; lng: number };
+                            // console.log('Selected Location Coordinates:', lat, lng);
+                            setLocationCoordinates({ latitude: lat, longitude: lng });
+                        }
                     }}
                     query={{
                         key: 'AIzaSyDlRXMUhwmnCmDXpntaFkL66-vI6cMxWrY',
@@ -183,12 +193,6 @@ const GPSMap = ({navigation}:Props) => {
                     }}
                     fetchDetails={true}
                 />
-
-                {/* <TextInput
-                    style={styles.searchBar}
-                    placeholder="Search..."
-                    // Add your onChangeText function to handle search input
-                /> */}
 
                 <TouchableOpacity style={styles.filterButton} onPress={toggleFilterDropdown}>
                     <Image source={require('./FilterLogo.png')} style={styles.filterIcon} resizeMode="contain" />
@@ -259,20 +263,19 @@ const styles = StyleSheet.create({
     },
     map: {
         flex: 1,
-        ...StyleSheet.absoluteFillObject, // Map covers the whole page
+        ...StyleSheet.absoluteFillObject,
     },
     searchContainer: {
         position: 'absolute',
-        width: '95%',
+        width: '88%',
         flexDirection: 'row',
         alignItems: 'center',
         paddingLeft: 10,
-        paddingRight: 25,
         paddingVertical: 10,
-        backgroundColor: 'transparent', // Adjust this color as needed
+        backgroundColor: 'transparent', 
     },
     searchBar: {
-        height: 40,
+        height: 38,
         width: '88%',
         backgroundColor: 'white',
         borderRadius: 5,
@@ -333,7 +336,7 @@ const styles = StyleSheet.create({
     checkedBox: {
         backgroundColor: '#000',
     },
-    searchButton: {
+    searchButton: { 
         padding: 10,
         backgroundColor: 'rgba(255, 255, 255, 0.5)',
     },
