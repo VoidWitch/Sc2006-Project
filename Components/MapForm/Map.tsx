@@ -271,9 +271,7 @@ const GPSMap = ({navigation}:Props) => {
         // console.log('Markers:', markers);
     };
 
-    const displayLots = () => {
-        // Implementation logic for display
-        // After retrieving nearest 5, display on gmaps
+   const displayLots = async (parkingCoords) => {
         // Implementation logic for display
         // After retrieving nearest 5, display on gmaps 
 
@@ -296,41 +294,29 @@ const GPSMap = ({navigation}:Props) => {
 
             // Extract the parking lot values
             const parkingLots = parkingLotData.value;
+            
+            // find the parking lot value from parkingLots for the one with matching coordinate of parkingCoords passed in
+             // Find the parking lot with coordinates matching parkingCoords
+            const selectedParkingLot = parkingLots.find(parkingLot => (
+                parkingLot.Latitude === parkingCoords.latitude && parkingLot.Longitude === parkingCoords.longitude
+            ));
 
-               // Find the parking lots with matching coordinates
-            const matchingParkingLots = parkingLots.filter(parkingLot => {
-                return (
-                    (parkingLot.Latitude === parkingCoords1.latitude && parkingLot.Longitude === parkingCoords1.longitude) ||
-                    (parkingLot.Latitude === parkingCoords2.latitude && parkingLot.Longitude === parkingCoords2.longitude) ||
-                    (parkingLot.Latitude === parkingCoords3.latitude && parkingLot.Longitude === parkingCoords3.longitude) ||
-                    (parkingLot.Latitude === parkingCoords4.latitude && parkingLot.Longitude === parkingCoords4.longitude) ||
-                    (parkingLot.Latitude === parkingCoords5.latitude && parkingLot.Longitude === parkingCoords5.longitude)
-                );
-            });
-
-        // Assign each matching parking lot to its own variable
-            let parkingLot1, parkingLot2, parkingLot3, parkingLot4, parkingLot5;
-            matchingParkingLots.forEach(parkingLot => {
-                if (parkingLot.Latitude === parkingCoords1.latitude && parkingLot.Longitude === parkingCoords1.longitude) {
-                    parkingLot1 = parkingLot;
-                } else if (parkingLot.Latitude === parkingCoords2.latitude && parkingLot.Longitude === parkingCoords2.longitude) {
-                    parkingLot2 = parkingLot;
-                } else if (parkingLot.Latitude === parkingCoords3.latitude && parkingLot.Longitude === parkingCoords3.longitude) {
-                    parkingLot3 = parkingLot;
-                } else if (parkingLot.Latitude === parkingCoords4.latitude && parkingLot.Longitude === parkingCoords4.longitude) {
-                    parkingLot4 = parkingLot;
-                } else if (parkingLot.Latitude === parkingCoords5.latitude && parkingLot.Longitude === parkingCoords5.longitude) {
-                    parkingLot5 = parkingLot;
-                }
-            });
-
-        //frontend logic to display all values of each parking lot
+            if (selectedParkingLot) {
+                // Display the selected parking lot
+                console.log('Selected Parking Lot:', selectedParkingLot); 
+                // Add frontend logic here to display the selected parking lot in your UI 
+            } else {
+                console.log('No matching parking lot found for the given coordinates.');
+            }
+    
         
 
         } catch (error) {
             console.error('Error:', error);
             // Handle errors (e.g., display an error message to the user)
         }
+
+
     };
 
     const seeMoreLots = () => {
@@ -411,6 +397,7 @@ const GPSMap = ({navigation}:Props) => {
                     coordinate={parkingCoords1}
                     title="Bike Parking 1"
                     pinColor="blue"
+                    onPress={() => displayLots(parkingCoords1)}
                     />
                 }
                 {
@@ -418,6 +405,7 @@ const GPSMap = ({navigation}:Props) => {
                     coordinate={parkingCoords2}
                     title="Bike Parking 2"
                     pinColor="blue"
+                    onPress={() => displayLots(parkingCoords2)}
                     />
                 }
                 {
@@ -425,6 +413,7 @@ const GPSMap = ({navigation}:Props) => {
                     coordinate={parkingCoords3}
                     title="Bike Parking 3"
                     pinColor="blue"
+                    onPress={() => displayLots(parkingCoords3)}
                     />
                 }
                 {
@@ -432,6 +421,7 @@ const GPSMap = ({navigation}:Props) => {
                     coordinate={parkingCoords4}
                     title="Bike Parking 4"
                     pinColor="blue"
+                    onPress={() => displayLots(parkingCoords4)}
                     />
                 }
                 {
@@ -439,6 +429,7 @@ const GPSMap = ({navigation}:Props) => {
                     coordinate={parkingCoords5}
                     title="Bike Parking 5"
                     pinColor="blue"
+                    onPress={() => displayLots(parkingCoords5)}
                     />
                 }
 
