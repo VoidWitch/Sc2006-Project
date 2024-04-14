@@ -39,6 +39,7 @@ const getUserMobile = (mobile: string): Promise<string | null> => {
 		const dbRef = ref(getDatabase());
 		get(child(dbRef, `users/${mobile}`)).then((snapshot) => {
 			if (snapshot.exists()) {
+				console.log('User exists(login page)');
 				resolve(mobile);
 			} else {
 				resolve(null);		// OR RESOLVE(UNDEFINED)
@@ -58,6 +59,7 @@ const getUserPassword = (mobile: string): Promise<string | null> => {
 				const userData = snapshot.val();
 				const password = userData.password;
 				resolve(password);
+				console.log('User exists with pw: ', password);
 			} else {
 				resolve(null);
 			}

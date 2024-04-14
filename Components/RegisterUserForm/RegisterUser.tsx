@@ -95,8 +95,9 @@ const RegisterUserScreen = ({navigation}:Props) => {
     }; 
     
     const handleRegistered = () => { 
-        console.log('Registered! Verifying user...');   // REDIRECT TO VERIFICATION PAGE
+        // console.log('Registered! Verifying user...');   // REDIRECT TO VERIFICATION PAGE
         writeUserData(mobile, password, securityQuestion, securityAnswer);
+        console.log('Registering ', mobile, password, securityQuestion, securityAnswer);
         navigation.replace('Login');        // REDIRECT TO LOGIN PAGE
 	}; 
     

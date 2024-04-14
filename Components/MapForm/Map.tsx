@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 import Geolocation from '@react-native-community/geolocation';
 import {regMobile} from '../LoginForm/Login';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
+import { homeCoordinates } from '../AddressesForm/Addresses';
 
 type RootStackParamList = {
     'FAQ': undefined;
@@ -19,6 +20,9 @@ type ScreenNavigationProp = StackNavigationProp<RootStackParamList>;
 interface Props {
     navigation: ScreenNavigationProp;
 }
+
+export let selectedFilter = 5;        // DEFAULT
+export let shelterFilter = false;
 
 const GPSMap = ({navigation}:Props) => {
     
@@ -36,7 +40,7 @@ const GPSMap = ({navigation}:Props) => {
     const [locationCoordinates, setLocationCoordinates] = useState<{ latitude: number; longitude: number }>();
 
     useEffect(() => {
-        console.log('Location Coordinates Updated:', locationCoordinates);
+        console.log('Selected Location Coordinates Updated:', locationCoordinates);  // SHOW SELECTED LOCATION COORDS
     }, [locationCoordinates]);
 
     useEffect(() => {
@@ -77,7 +81,6 @@ const GPSMap = ({navigation}:Props) => {
                 });
             },
             (error) => console.log('Error. Unable to get live location updates.'),
-            { enableHighAccuracy: true, distanceFilter: 10 }
         );
     };
 
@@ -93,13 +96,15 @@ const GPSMap = ({navigation}:Props) => {
 
 
     // FILTER CONTROLS
-    const [shelterFilter, setShelterFilter] = useState(false);  // no shelter default
+    const [shelter, setShelterFilter] = useState(false);  // no shelter default
     const [filterDropdownVisible, setFilterDropdownVisible] = useState(false);
-    const [selectedFilter, setSelectedFilter] = useState(5); // Default filter option
+    const [displayFilter, setDisplayFilter] = useState(5); // Default filter option
 
     const filterSearch = (value: number) => {
         setFilterDropdownVisible(false);
-        setSelectedFilter(value);
+        setDisplayFilter(value);
+        // JUST IMPORT {SELECTEDFILTER} FROM THIS COMPONENT
+        selectedFilter = displayFilter;     // UPDATE SELECTED FILTER TO EXPORT TO OTHER COMPONENTS
     };
 
     const toggleFilterDropdown = () => {
@@ -108,6 +113,8 @@ const GPSMap = ({navigation}:Props) => {
 
     const handleShelterFilter = () => {
         setShelterFilter(!shelterFilter);
+        // JUST IMPORT {SHELTERFILTER} FROM THIS COMPONENT
+        shelterFilter = shelter;    // UPDATE SHELTER FILTER TO EXPORT TO OTHER COMPONENTS
     };
 
 
@@ -130,6 +137,25 @@ const GPSMap = ({navigation}:Props) => {
         // Call display lots function to display them
     };
 
+    const handleHomeAddress = () => {
+        // // UPLOAD SELECTED LOCATION WITH HOME COORDINATES
+        console.log('Home coordinates:', {homeCoordinates});
+        console.log('Imported Home Coords: ', {homeCoordinates}, 'Location (not the same at first): ', locationCoordinates); 
+        if (!{homeCoordinates}){
+            Alert.alert('No home set.')
+        }
+        else{   // THIS WILL SET THE HOME COORDINATES IMMEDIATELY TO SELECTED LOCATION COORDINATES
+            if (homeCoordinates) {
+                const { latitude, longitude } = homeCoordinates;
+                console.log('Extracted Latitude, Longitude from Home coords:', latitude, longitude);
+                setLocationCoordinates({latitude, longitude});  
+                console.log('Imported Home Coords: ', {homeCoordinates}, 'Location (should be same)): ', locationCoordinates);   
+            } else {
+                console.log('Home coordinates are null or undefined.');
+            }
+        }
+    }
+
 
     // NAVIGATION IMPLEMENTATIONS
     const handleFAQ = () => {
@@ -144,9 +170,14 @@ const GPSMap = ({navigation}:Props) => {
         navigation.navigate('Change Password');
     };
 
+    const handleSavedAddress = () => {
+        navigation.navigate('Saved Addresses');
+    }
+
     const handleLogout = () => {
         navigation.replace('Login');
     };
+
 
 //  AIzaSyDlRXMUhwmnCmDXpntaFkL66-vI6cMxWrY   -- Google Maps API key
     return (
@@ -157,7 +188,7 @@ const GPSMap = ({navigation}:Props) => {
                 showsUserLocation={true}
                 followsUserLocation={true}      
             >
-                {/* <Marker
+                {/* <Marker     // CAN USE TO SHOW DISPLAYED LOCATIONS
                     coordinate={{
                         latitude: region.latitude,
                         longitude: region.longitude,
@@ -188,7 +219,7 @@ const GPSMap = ({navigation}:Props) => {
                             position: 'absolute',
                             top: 40,
                             backgroundColor: 'white',
-                            zIndex: 1, // Ensure dropdown appears above map
+                            zIndex: 1, // DROPDOWN APPEARS BEFORE MAP
                         },
                     }}
                     fetchDetails={true}
@@ -229,6 +260,9 @@ const GPSMap = ({navigation}:Props) => {
                 <TouchableOpacity style={styles.toggleSidePanelButton} onPress={handleToggleSidePanel}>
                     <Image source={require('./DrawerLogo.png')} style={styles.DrawerIcon} resizeMode="contain" />
                 </TouchableOpacity>
+                <TouchableOpacity style={styles.HomeButton} onPress={handleHomeAddress}>
+                    <Image source={require('./HomeLogo.png')} style={styles.HomeIcon} resizeMode="contain" />
+                </TouchableOpacity>
             </View>
             {showSidePanel && (
                 <>
@@ -238,16 +272,19 @@ const GPSMap = ({navigation}:Props) => {
                         <Text style={styles.userID}>User ID: {regMobile}</Text>
                         <Text style={styles.helpHeader}>Help</Text>
                         <TouchableOpacity style={styles.FAQButton} onPress={handleFAQ}>
-                            <Text style={styles.FAQButtonText}>FAQ</Text>
+                            <Text style={styles.panelText}>FAQ</Text>
                         </TouchableOpacity>
                         <TouchableOpacity style={styles.privacyConcernsButton} onPress={handlePrivacyConcerns}>
-                            <Text style={styles.privacyButtonText}>Privacy Concerns</Text>
+                            <Text style={styles.panelText}>Privacy Concerns</Text>
                         </TouchableOpacity>
                         <TouchableOpacity style={styles.changePWButton} onPress={handleChangePW}>
-                            <Text style={styles.changePWText}>Change Password</Text>
+                            <Text style={styles.panelText}>Change Password</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity style={styles.savedAddressesButton} onPress={handleSavedAddress}>
+                            <Text style={styles.panelText}>Saved Addresses</Text>
                         </TouchableOpacity>
                         <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-                            <Text style={styles.logoutText}>Logout</Text>
+                            <Text style={styles.panelText}>Logout</Text>
                         </TouchableOpacity>
                     </View>
                 </>
@@ -349,7 +386,7 @@ const styles = StyleSheet.create({
         position: 'absolute',
         right: 20,
         bottom: 20,
-        height: 125,
+        height: 130,
         width: 65,
         flexDirection: 'column',
         alignItems: 'center',
@@ -367,7 +404,24 @@ const styles = StyleSheet.create({
         borderColor: '#ccc',
         backgroundColor: 'rgba(255, 255, 255, 0.8)',
     },
+    HomeButton: {
+        padding: 10,
+        borderRadius: 20,
+        borderWidth: 1,
+        top: 5,
+        width: 60,
+        height: 60,
+        borderColor: '#ccc',
+        backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    },
     DrawerIcon: {
+        top: 5,
+        left: 3,
+        width: 35,
+        height: 35,
+        tintColor: '#000',
+    },
+    HomeIcon: {
         top: 5,
         left: 3,
         width: 30,
@@ -408,29 +462,14 @@ const styles = StyleSheet.create({
     privacyConcernsButton: {
         marginTop: 5,
     },
-    privacyButtonText: {
-        fontSize: 14,
-        marginLeft: 20,
-        color: 'white',
-        textDecorationLine: 'underline',
-    },
     FAQButton: {
         marginTop: 5,
-    },
-    FAQButtonText: {
-        fontSize: 14,
-        marginLeft: 20,
-        color: 'white',
-        textDecorationLine: 'underline',
     },
     changePWButton: {
         marginTop: 5,
     },
-    changePWText: {
-        fontSize: 14,
-        marginLeft: 20,
-        color: 'white',
-        textDecorationLine: 'underline',
+    savedAddressesButton:{
+        marginTop: 5,
     },
     logoutButton: {
         position: 'absolute',
@@ -438,11 +477,11 @@ const styles = StyleSheet.create({
         alignSelf: 'center',
         width: '100%',
     },
-    logoutText: {
-        fontSize: 18,
+    panelText: {
+        fontSize: 14,
         marginLeft: 20,
-        fontWeight: 'bold',
         color: 'white',
+        textDecorationLine: 'underline',
     },
     overlay: {
         position: 'absolute',
@@ -455,5 +494,3 @@ const styles = StyleSheet.create({
 });
 
 export default GPSMap;
-export let selectedFilter = '5';        //or export const selectedFilter = undefined
-export let shelterFilter = 'false';

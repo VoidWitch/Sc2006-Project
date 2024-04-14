@@ -1,146 +1,160 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, FlatList, Alert } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, FlatList, Alert } from 'react-native';
+import { GooglePlaceData, GooglePlaceDetail, GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
+
 
 interface AddressItemProps {
     address: string;
+    coordinates: { latitude: number; longitude: number };
     onEdit: () => void;
     onDelete: () => void;
 }
 
-const AddressItem: React.FC<AddressItemProps> = ({ address, onEdit, onDelete }) => (
+const AddressItem: React.FC<AddressItemProps> = ({ address, coordinates, onEdit, onDelete }) => (
     <View style={styles.addressItem}>
         <Text style={styles.addressText}>{address}</Text>
         <View style={styles.buttonsContainer}>
-        <TouchableOpacity onPress={onEdit} style={styles.button}>
-            <Text style={styles.buttonText}>Edit</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={onDelete} style={styles.button}>
-            <Text style={styles.buttonText}>Delete</Text>
-        </TouchableOpacity>
+            <TouchableOpacity onPress={onEdit} style={styles.button}>
+                <Text style={styles.buttonText}>Set as Home</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={onDelete} style={styles.button}>
+                <Text style={styles.buttonText}>Delete</Text>
+            </TouchableOpacity>
         </View>
     </View>
 );
- 
-const SavedAddressesScreen = () => { 
-    const [addresses, setAddresses] = useState<string[]>([]); // Explicitly define the type as an array of strings
-    const [newAddress, setNewAddress] = useState(''); 
- 
-    const handleAddAddress = () => { 
-        if (newAddress.trim() !== '') { 
-        setAddresses([...addresses, newAddress]); 
-        setNewAddress(''); 
-        } else { 
-        Alert.alert('Error', 'Please enter a valid address.'); 
-        } 
-    }; 
- 
-    const handleDeleteAddress = (index: number) => { // Explicitly define the type as number
-        Alert.alert('Confirm Delete', 'Are you sure you want to delete this address?', [ 
-        { text: 'Cancel' }, 
-        { 
-            text: 'Delete', onPress: () => { 
-            const updatedAddresses = addresses.filter((_, i) => i !== index); 
-            setAddresses(updatedAddresses); 
-            } 
-        }, 
-        ]); 
+
+export let homeCoordinates: { latitude: number, longitude: number } | null = null;
+
+const SavedAddressesScreen = () => {
+    const [addresses, setAddresses] = useState<{ address: string; coordinates: { latitude: number; longitude: number } }[]>([]);
+    // const [homeCoordinates, setHomeCoordinates] = useState<{ latitude: number; longitude: number } | null>();    // CAN REMOVE AT THE END
+    const [homeAddress, setHomeAddress] = useState<string | null>();
+
+    const handleAddAddress = (data: GooglePlaceData, details: GooglePlaceDetail | null) => {
+        if (details) {
+            const { description } = data;
+            const { geometry } = details;
+            const { lat, lng } = geometry.location;
+
+            const newAddress = {
+                address: description,
+                coordinates: {
+                    latitude: lat,
+                    longitude: lng,
+                },
+            };
+
+            setAddresses(prevAddresses => [...prevAddresses, newAddress]);
+        }
     };
- 
-    const handleEditAddress = (index: number) => { // Explicitly define the type as number
-        const addressToEdit = addresses[index]; 
-        // For simplicity, we'll just prompt for now. You might want to open a new screen or modal for editing. 
-        Alert.prompt( 
-        'Edit Address', 
-        'Update your address.', 
-        [ 
-            { text: 'Cancel' }, 
-            { 
-            text: 'Save', 
-            onPress: (text) => {
-                const updatedAddresses = [...addresses];
-                updatedAddresses[index] = text ?? ''; // Use '' if text is undefined
-                setAddresses(updatedAddresses);
+
+    const handleDeleteAddress = (index: number) => {
+        Alert.alert('Confirm Delete', 'Are you sure you want to delete this address?', [
+            { text: 'Cancel' },
+            {
+                text: 'Delete',
+                onPress: () => {
+                    const updatedAddresses = [...addresses];
+                    updatedAddresses.splice(index, 1);
+                    setAddresses(updatedAddresses);
+                },
             },
-            }, 
-        ], 
-        'plain-text', 
-        addressToEdit 
-    ); 
+        ]);
+        console.log('Deleted entry: ', homeCoordinates);
+    };
+
+    const handleSetHome = (address: string, coordinates: { latitude: number; longitude: number }) => {
+        homeCoordinates = coordinates;
+        // setHomeCoordinates(coordinates);     // CAN DELETE AT THE END
+        setHomeAddress(address);
+        Alert.alert('Success', 'Location set as home.');
+        console.log('Home Location set at: ', homeAddress, homeCoordinates)
+    };
+
+    useEffect(() => {
+        console.log('Use effect location set at: (should be undefined at the start of component mount)', homeAddress, homeCoordinates);
+    }, [homeAddress, homeCoordinates]);
+    
+    return (
+        <View style={styles.container}>
+            <GooglePlacesAutocomplete
+                placeholder="Search for an address"
+                onPress={(data, details = null) => {
+                    handleAddAddress(data, details);
+                }}
+                query={{
+                    key: 'AIzaSyDlRXMUhwmnCmDXpntaFkL66-vI6cMxWrY',
+                    language: 'en',
+                }}
+                styles={{
+                    listView: {
+                        position: 'absolute',
+                        top: 70,
+                        backgroundColor: 'white',
+                        zIndex: 1,
+                    },
+                }}
+                fetchDetails={true}
+            />
+            <FlatList
+                data={addresses}
+                keyExtractor={(item, index) => index.toString()}
+                renderItem={({ item, index }) => (
+                    <AddressItem
+                        address={item.address}
+                        coordinates={item.coordinates}
+                        onEdit={() => handleSetHome(item.address, item.coordinates)}
+                        onDelete={() => handleDeleteAddress(index)}
+                    />
+                )}
+            />
+            {homeAddress && (
+                <Text style={styles.homeText}>
+                    Home: {homeAddress}
+                </Text>
+            )}
+        </View>
+        
+    );
 };
- 
-    return ( 
-        <View style={styles.container}> 
-            <TextInput 
-                style={styles.input} 
-                placeholder="Add a new address" 
-                value={newAddress} 
-                onChangeText={setNewAddress} 
-            /> 
-            <TouchableOpacity style={styles.addButton} onPress={handleAddAddress}> 
-                <Text style={styles.buttonText}>Add Address</Text> 
-            </TouchableOpacity> 
-            <FlatList 
-                data={addresses} 
-                keyExtractor={(item, index) => index.toString()} 
-                renderItem={({ item, index }) => ( 
-                <AddressItem 
-                    address={item} 
-                    onEdit={() => handleEditAddress(index)} 
-                    onDelete={() => handleDeleteAddress(index)} 
-                /> 
-                )} 
-            /> 
-        </View> 
-    ); 
-}; 
- 
-const styles = StyleSheet.create({ 
-    container: { 
-        flex: 1, 
-        padding: 20, 
-        backgroundColor: '#fff', 
-    }, 
-    input: { 
-        borderWidth: 1, 
-        borderColor: '#ccc', 
-        borderRadius: 5, 
-        padding: 10, 
-        marginBottom: 10, 
-    }, 
-    addButton: { 
-        backgroundColor: 'blue', 
-        borderRadius: 5, 
-        padding: 10, 
-        justifyContent: 'center', 
-        alignItems: 'center', 
-        marginBottom: 20, 
-    }, 
-    addressItem: { 
-        backgroundColor: '#f9f9f9', 
-        padding: 15, 
-        borderRadius: 5, 
-        flexDirection: 'row', 
-        justifyContent: 'space-between', 
-        alignItems: 'center', 
-        marginBottom: 10, 
-    }, 
-    addressText: { 
-        flex: 1, 
-    }, 
-    buttonsContainer: { 
-        flexDirection: 'row', 
-        marginLeft: 10, 
-    }, 
-    button: { 
-        backgroundColor: 'blue', 
-        marginLeft: 5, 
-        padding: 5, 
-        borderRadius: 5, 
-    }, 
-    buttonText: { 
-        color: '#fff', 
-        fontSize: 14, 
-    }, 
-}); 
- 
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        padding: 20,
+        backgroundColor: '#fff',
+    },
+    addressItem: {
+        backgroundColor: '#f9f9f9',
+        padding: 15,
+        borderRadius: 5,
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 10,
+    },
+    addressText: {
+        flex: 1,
+    },
+    buttonsContainer: {
+        flexDirection: 'row',
+        marginLeft: 10,
+    },
+    button: {
+        backgroundColor: '#48c289',
+        marginLeft: 5,
+        padding: 5,
+        borderRadius: 5,
+    },
+    buttonText: {
+        color: '#fff',
+        fontSize: 14,
+    },
+    homeText: {
+        marginTop: 10,
+        fontSize: 16,
+    },
+});
+
 export default SavedAddressesScreen;

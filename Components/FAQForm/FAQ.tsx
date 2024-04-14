@@ -48,7 +48,6 @@ const faqData = [
 const FAQPage = () => {
     return (
         <View style={styles.container}>
-        <StatusBar backgroundColor="#48c289" barStyle="light-content" />
         <View style={styles.headerBar}>
             <Text style={styles.headerText}>How can we help you?</Text>
         </View>
