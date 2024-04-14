@@ -273,7 +273,64 @@ const GPSMap = ({navigation}:Props) => {
 
     const displayLots = () => {
         // Implementation logic for display
-        // After retrieving nearest 5, display on gmaps
+        // After retrieving nearest 5, display on gmaps 
+        // Implementation logic for display
+        // After retrieving nearest 5, display on gmaps 
+
+        const apiUrl = 'http://datamall2.mytransport.sg/ltaodataservice/BicycleParkingv2';
+        const accKey = 'xvBW6rA6TyGTNQlS8tK0Vg==';
+
+        try {
+            // Fetch parking lot data from the LTA API
+            const response = await fetch(apiUrl, {
+                headers: {
+                    'AccountKey': accKey
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch parking lot data');
+            } 
+
+            const parkingLotData = await response.json();
+
+            // Extract the parking lot values
+            const parkingLots = parkingLotData.value;
+
+               // Find the parking lots with matching coordinates
+            const matchingParkingLots = parkingLots.filter(parkingLot => {
+                return (
+                    (parkingLot.Latitude === parkingCoords1.latitude && parkingLot.Longitude === parkingCoords1.longitude) ||
+                    (parkingLot.Latitude === parkingCoords2.latitude && parkingLot.Longitude === parkingCoords2.longitude) ||
+                    (parkingLot.Latitude === parkingCoords3.latitude && parkingLot.Longitude === parkingCoords3.longitude) ||
+                    (parkingLot.Latitude === parkingCoords4.latitude && parkingLot.Longitude === parkingCoords4.longitude) ||
+                    (parkingLot.Latitude === parkingCoords5.latitude && parkingLot.Longitude === parkingCoords5.longitude)
+                );
+            });
+
+        // Assign each matching parking lot to its own variable
+            let parkingLot1, parkingLot2, parkingLot3, parkingLot4, parkingLot5;
+            matchingParkingLots.forEach(parkingLot => {
+                if (parkingLot.Latitude === parkingCoords1.latitude && parkingLot.Longitude === parkingCoords1.longitude) {
+                    parkingLot1 = parkingLot;
+                } else if (parkingLot.Latitude === parkingCoords2.latitude && parkingLot.Longitude === parkingCoords2.longitude) {
+                    parkingLot2 = parkingLot;
+                } else if (parkingLot.Latitude === parkingCoords3.latitude && parkingLot.Longitude === parkingCoords3.longitude) {
+                    parkingLot3 = parkingLot;
+                } else if (parkingLot.Latitude === parkingCoords4.latitude && parkingLot.Longitude === parkingCoords4.longitude) {
+                    parkingLot4 = parkingLot;
+                } else if (parkingLot.Latitude === parkingCoords5.latitude && parkingLot.Longitude === parkingCoords5.longitude) {
+                    parkingLot5 = parkingLot;
+                }
+            });
+
+        //frontend logic to display all values of each parking lot
+        
+
+        } catch (error) {
+            console.error('Error:', error);
+            // Handle errors (e.g., display an error message to the user)
+        }
     };
 
     const seeMoreLots = () => {
