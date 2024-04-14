@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, FlatList, Alert } from 'react-native';
 import { GooglePlaceData, GooglePlaceDetail, GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 
 interface AddressItemProps {
@@ -28,8 +29,7 @@ export let homeCoordinates: { latitude: number, longitude: number } | null = nul
 
 const SavedAddressesScreen = () => {
     const [addresses, setAddresses] = useState<{ address: string; coordinates: { latitude: number; longitude: number } }[]>([]);
-    // const [homeCoordinates, setHomeCoordinates] = useState<{ latitude: number; longitude: number } | null>();    // CAN REMOVE AT THE END
-    const [homeAddress, setHomeAddress] = useState<string | null>();
+    const [homeAddress, setHomeAddress] = useState<string | null>(null);
 
     const handleAddAddress = (data: GooglePlaceData, details: GooglePlaceDetail | null) => {
         if (details) {
@@ -64,13 +64,35 @@ const SavedAddressesScreen = () => {
         console.log('Deleted entry: ', homeCoordinates);
     };
 
-    const handleSetHome = (address: string, coordinates: { latitude: number; longitude: number }) => {
+    const handleSetHome = async (address: string, coordinates: { latitude: number; longitude: number }) => {
         homeCoordinates = coordinates;
-        // setHomeCoordinates(coordinates);     // CAN DELETE AT THE END
         setHomeAddress(address);
         Alert.alert('Success', 'Location set as home.');
-        console.log('Home Location set at: ', homeAddress, homeCoordinates)
+        console.log('Home Location set at: ', homeAddress, homeCoordinates);
+
+        // Save homeAddress to AsyncStorage
+        try {
+            await AsyncStorage.setItem('homeAddress', address);
+        } catch (error) {
+            console.error('Error saving homeAddress:', error);
+        }
     };
+
+    useEffect(() => {
+        // Load saved homeAddress from AsyncStorage when the component mounts
+        const loadHomeAddress = async () => {
+            try {
+                const savedHomeAddress = await AsyncStorage.getItem('homeAddress');
+                if (savedHomeAddress) {
+                    setHomeAddress(savedHomeAddress);
+                }
+            } catch (error) {
+                console.error('Error loading homeAddress:', error);
+            }
+        };
+        loadHomeAddress();
+    }, []);
+
 
     useEffect(() => {
         console.log('Use effect location set at: (should be undefined at the start of component mount)', homeAddress, homeCoordinates);
