@@ -319,9 +319,51 @@ const GPSMap = ({navigation}:Props) => {
 
     };
 
-    const seeMoreLots = () => {
-        // Implementation logic to get next 5 lots
-        // Call display lots function to display them
+    const seeMoreLots = async () => {
+        try {
+            // Get the user's current location coordinates
+            const latitude = locationCoordinates?.latitude || 0;
+            const longitude = locationCoordinates?.longitude || 0;
+            setSearchCoordinates({ latitude, longitude });
+    
+            // Fetch nearby parking lot data from the API
+            const searchJSON = await searchLots(latitude, longitude);
+    
+            // Calculate distances for all lots and store them in an array
+            const disVal = searchJSON.value.map(lot => (
+                getDistanceFromLatLonInKm(latitude, longitude, lot.Latitude, lot.Longitude)
+            ));
+    
+            // Sort distances and get the indices of the next 5 nearest lots
+            const sortedIndices = disVal.map((val, index) => ({ index, val }))
+                .sort((a, b) => a.val - b.val)
+                .map(({ index }) => index)
+                .slice(5, 10);
+    
+            // Iterate over the indices of the next 5 nearest lots
+            for (var i in indices) {
+                const latitude = searchJSON.value[indices[i]]["Latitude"];
+                const longitude = searchJSON.value[indices[i]]["Longitude"];
+
+                // console.log(pointLat, pointLon);
+
+                if (i == "5") {
+                    setParkingCoords1({ latitude, longitude });
+                } else if (i == "6") {
+                    setParkingCoords2({ latitude, longitude });
+                } else if (i == "7") {
+                    setParkingCoords3({ latitude, longitude });
+                } else if (i == "8") {
+                    setParkingCoords4({ latitude, longitude });
+                } else if (i == "9") {
+                    setParkingCoords5({ latitude, longitude });
+                }
+            }
+
+        } catch (error) {
+            console.error('Error fetching parking lot data:', error);
+            // Handle errors (e.g., display an error message to the user)
+        }
     };
 
     const handleHomeAddress = () => {
