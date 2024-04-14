@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Alert, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 import Geolocation from '@react-native-community/geolocation';
@@ -25,6 +25,27 @@ export let selectedFilter = 5;        // DEFAULT
 export let shelterFilter = false;
 
 const GPSMap = ({navigation}:Props) => {
+
+    const mapViewRef = useRef<MapView>(null);
+
+    // RETURN DISTANCES BETWEEN COORDS
+    const getDistanceFromLatLonInKm = (lat1, lon1, lat2, lon2) => {
+    var R = 6371; // Radius of the earth in km
+    var dLat = deg2rad(lat2-lat1);  // deg2rad below
+    var dLon = deg2rad(lon2-lon1); 
+    var a = 
+        Math.sin(dLat/2) * Math.sin(dLat/2) +
+        Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * 
+        Math.sin(dLon/2) * Math.sin(dLon/2)
+        ; 
+    var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
+    var d = R * c; // Distance in km
+    return d;
+    };
+      
+    const deg2rad = (deg) => {
+    return deg * (Math.PI/180);
+    };
     
     // MAP REGION DETAILS
     const [region, setRegion] = useState({      // DEFAULT RENDER
@@ -51,6 +72,40 @@ const GPSMap = ({navigation}:Props) => {
     }, []);
 
     let watchID: number;
+    /*
+    const [markers, setMarkers] = useState([
+        
+      ]);*/
+
+    const [searchCoordinates, setSearchCoordinates] = useState({
+        latitude: 0,
+        longitude: 0,
+    });
+
+    const [parkingCoords1, setParkingCoords1] = useState({
+        latitude: 0,
+        longitude: 0,
+    });
+
+    const [parkingCoords2, setParkingCoords2] = useState({
+        latitude: 0,
+        longitude: 0,
+    });
+
+    const [parkingCoords3, setParkingCoords3] = useState({
+        latitude: 0,
+        longitude: 0,
+    });
+
+    const [parkingCoords4, setParkingCoords4] = useState({
+        latitude: 0,
+        longitude: 0,
+    });
+
+    const [parkingCoords5, setParkingCoords5] = useState({
+        latitude: 0,
+        longitude: 0,
+    });
 
     const getLocation = () => {
         Geolocation.getCurrentPosition(
@@ -117,14 +172,103 @@ const GPSMap = ({navigation}:Props) => {
         shelterFilter = shelter;    // UPDATE SHELTER FILTER TO EXPORT TO OTHER COMPONENTS
     };
 
+    const searchLots = async(lat, lon) => {
+        //Constants and api
+        const apiUrl = 'http://datamall2.mytransport.sg/ltaodataservice/BicycleParkingv2';
+        const accKey = 'xvBW6rA6TyGTNQlS8tK0Vg=='
+        const shelterIndicator = "placeholder"; //to be fixed later
+      
+        const params = new URLSearchParams({
+            Lat: lat,
+            Long: lon,
+            Dist: '1', // Default radius in kilometers. Can change if needed.
+        });
+      
+        // Implementation logic for bicycle search
+        // Call filterSearch and get both filteredResults and searchCoordinates
+        
+        //get a json of the filtered lots based on if got shelter or no shelter
+      
+        try {
+            // Make the API request using fetch with the SDK key in the Authorization header
+            const response = await fetch(apiUrl + "?" + params.toString(), {
+              headers: {
+                'AccountKey' : accKey
+              }
+            });
+
+            return await response.json();
+      
+            // console.log(await response.json());
+            
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+      
+        } catch (err) {
+          // console.log(err);
+        }
+      }
+
 
 
     // BICYCLE LOT IMPLEMENTATIONS
-    const handleSearch = () => {
+    const handleSearch = async () => {
         // Implementation logic for bicycle search
         // Get user input location -> convert to coordinates and compare with bicycle lots (if selected location coordinates is empty)
 
         // get selected location input and compare with API coords, and display selected location and bike lots.
+
+        // console.log(locationCoordinates);
+
+        /*
+        const searchMarker = {
+            id: 1,
+            coordinate: locationCoordinates || { latitude: 0, longitude: 0 }, // Default coordinates or actual coordinates
+            title: `Search Location`,
+          };
+    
+        setMarkers([markers[0], searchMarker]);*/
+
+        const latitude = locationCoordinates?.latitude || 0;
+        const longitude = locationCoordinates?.longitude || 0;
+        setSearchCoordinates({ latitude, longitude });
+
+        const searchJSON = await searchLots(latitude, longitude);
+
+            var disVal = [];
+
+            for (var i in searchJSON.value) {
+                var pointLat = searchJSON.value[i]["Latitude"];
+                var pointLon = searchJSON.value[i]["Longitude"];
+                disVal[disVal.length] = getDistanceFromLatLonInKm(latitude, longitude, pointLat, pointLon);
+            }
+
+            var indices = [...disVal.keys()] // GET 5 SMALLEST DISTANCES
+            .sort((a, b) => disVal[a] - disVal[b])
+            .slice(0, 5);
+
+            for (var i in indices) {
+                const latitude = searchJSON.value[indices[i]]["Latitude"];
+                const longitude = searchJSON.value[indices[i]]["Longitude"];
+
+                // console.log(pointLat, pointLon);
+
+                if (i == "0") {
+                    setParkingCoords1({ latitude, longitude });
+                } else if (i == "1") {
+                    setParkingCoords2({ latitude, longitude });
+                } else if (i == "2") {
+                    setParkingCoords3({ latitude, longitude });
+                } else if (i == "3") {
+                    setParkingCoords4({ latitude, longitude });
+                } else if (i == "4") {
+                    setParkingCoords5({ latitude, longitude });
+                }
+
+            }
+
+        // console.log('Markers:', markers);
     };
 
     const displayLots = () => {
@@ -183,6 +327,7 @@ const GPSMap = ({navigation}:Props) => {
     return (
         <View style={styles.container}>
             <MapView
+                ref={mapViewRef}
                 style={styles.map}
                 region={region}
                 showsUserLocation={true}
@@ -195,7 +340,51 @@ const GPSMap = ({navigation}:Props) => {
                     }}
                     title={"Your Location"}
                     description={"You are here!"}
-                /> */}
+                /> */
+                
+                    <Marker
+                    coordinate={searchCoordinates}
+                    title="Search Location"
+                    pinColor="red"
+                    />
+
+                }
+                {
+                    <Marker
+                    coordinate={parkingCoords1}
+                    title="Bike Parking 1"
+                    pinColor="blue"
+                    />
+                }
+                {
+                    <Marker
+                    coordinate={parkingCoords2}
+                    title="Bike Parking 2"
+                    pinColor="blue"
+                    />
+                }
+                {
+                    <Marker
+                    coordinate={parkingCoords3}
+                    title="Bike Parking 3"
+                    pinColor="blue"
+                    />
+                }
+                {
+                    <Marker
+                    coordinate={parkingCoords4}
+                    title="Bike Parking 4"
+                    pinColor="blue"
+                    />
+                }
+                {
+                    <Marker
+                    coordinate={parkingCoords5}
+                    title="Bike Parking 5"
+                    pinColor="blue"
+                    />
+                }
+
             </MapView>
 
             {/* SEARCH BAR, FILTER BUTTON, SEARCH BUTTON */}
