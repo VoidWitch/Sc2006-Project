@@ -271,9 +271,52 @@ const GPSMap = ({navigation}:Props) => {
         // console.log('Markers:', markers);
     };
 
-    const displayLots = () => {
+   const displayLots = async (parkingCoords) => {
         // Implementation logic for display
-        // After retrieving nearest 5, display on gmaps
+        // After retrieving nearest 5, display on gmaps 
+
+        const apiUrl = 'http://datamall2.mytransport.sg/ltaodataservice/BicycleParkingv2';
+        const accKey = 'xvBW6rA6TyGTNQlS8tK0Vg==';
+
+        try {
+            // Fetch parking lot data from the LTA API
+            const response = await fetch(apiUrl, {
+                headers: {
+                    'AccountKey': accKey
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch parking lot data');
+            } 
+
+            const parkingLotData = await response.json();
+
+            // Extract the parking lot values
+            const parkingLots = parkingLotData.value;
+            
+            // find the parking lot value from parkingLots for the one with matching coordinate of parkingCoords passed in
+             // Find the parking lot with coordinates matching parkingCoords
+            const selectedParkingLot = parkingLots.find(parkingLot => (
+                parkingLot.Latitude === parkingCoords.latitude && parkingLot.Longitude === parkingCoords.longitude
+            ));
+
+            if (selectedParkingLot) {
+                // Display the selected parking lot
+                console.log('Selected Parking Lot:', selectedParkingLot); 
+                // Add frontend logic here to display the selected parking lot in your UI 
+            } else {
+                console.log('No matching parking lot found for the given coordinates.');
+            }
+    
+        
+
+        } catch (error) {
+            console.error('Error:', error);
+            // Handle errors (e.g., display an error message to the user)
+        }
+
+
     };
 
     const seeMoreLots = () => {
@@ -354,6 +397,7 @@ const GPSMap = ({navigation}:Props) => {
                     coordinate={parkingCoords1}
                     title="Bike Parking 1"
                     pinColor="blue"
+                    onPress={() => displayLots(parkingCoords1)}
                     />
                 }
                 {
@@ -361,6 +405,7 @@ const GPSMap = ({navigation}:Props) => {
                     coordinate={parkingCoords2}
                     title="Bike Parking 2"
                     pinColor="blue"
+                    onPress={() => displayLots(parkingCoords2)}
                     />
                 }
                 {
@@ -368,6 +413,7 @@ const GPSMap = ({navigation}:Props) => {
                     coordinate={parkingCoords3}
                     title="Bike Parking 3"
                     pinColor="blue"
+                    onPress={() => displayLots(parkingCoords3)}
                     />
                 }
                 {
@@ -375,6 +421,7 @@ const GPSMap = ({navigation}:Props) => {
                     coordinate={parkingCoords4}
                     title="Bike Parking 4"
                     pinColor="blue"
+                    onPress={() => displayLots(parkingCoords4)}
                     />
                 }
                 {
@@ -382,6 +429,7 @@ const GPSMap = ({navigation}:Props) => {
                     coordinate={parkingCoords5}
                     title="Bike Parking 5"
                     pinColor="blue"
+                    onPress={() => displayLots(parkingCoords5)}
                     />
                 }
 
