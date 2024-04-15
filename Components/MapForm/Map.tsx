@@ -278,7 +278,9 @@ const GPSMap = ({navigation}:Props) => {
         setRegion({
             ...region,
             latitude,
-            longitude,            
+            longitude,     
+            latitudeDelta: 0.01,
+            longitudeDelta: 0.01,       
         });
 
         const searchJSON = await searchLots(latitude, longitude);       // SEARCHING BICYCLE LOTS
