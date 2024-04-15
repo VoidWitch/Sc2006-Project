@@ -6,6 +6,9 @@ import {regMobile} from '../LoginForm/Login';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
 import { homeCoordinates } from '../AddressesForm/Addresses';
+import { Linking } from 'react-native';
+import { getDatabase, ref, set, get, push, update, child } from "firebase/database";
+import { writeUserData } from '../App';
 
 
 type RootStackParamList = {
@@ -22,10 +25,70 @@ interface Props {
     navigation: ScreenNavigationProp;
 }
 
+export let selectedFilter = 5;        // DEFAULT
 export let shelterFilter = false;
-export let seeLotCounter = 0;
+
+const copyToClipboard = async (text) => {
+    await Clipboard.setString(text);
+    alert('Link copied to clipboard');
+  };
 
 const GPSMap = ({navigation}:Props) => {
+
+    const [markers, setMarkers] = useState([
+        {
+            id: 0,
+            coordinate: {
+                latitude: 0,
+                longitude: 0,
+            },
+            description: '',
+            title: '',
+            image: 0
+        }
+    ]);
+
+    /////////////////////
+
+    var regMarkerId = 0;
+
+    const getMarkerById = (id: number) => {
+        return markers.find(marker => marker.id === id);
+      };
+
+    const addMarker = (latitude, longitude, title, description, image) => {
+        const newMarker = {
+        id: markers.length, // Unique ID for the marker
+          coordinate: {
+            latitude,
+            longitude,
+          },
+          title,
+          description,
+          image
+        }; 
+      
+        setMarkers(markers => markers.concat(newMarker));
+
+        // setMarkers(prevMarkers => [...prevMarkers, newMarker]);
+
+      };
+
+
+    const updateMarker = (id: number, newCoordinate: { latitude: number; longitude: number }, description) => {
+    const updatedMarkers = markers.map(marker =>
+        marker.id === id
+        ? {
+            ...marker,
+            coordinate: newCoordinate,
+            description: description
+            }
+        : marker
+    );
+    
+    setMarkers(updatedMarkers);
+    };
+      
 
     const mapViewRef = useRef<MapView>(null);
 
@@ -60,6 +123,11 @@ const GPSMap = ({navigation}:Props) => {
         longitude: 0,
     });
     const [locationCoordinates, setLocationCoordinates] = useState<{ latitude: number; longitude: number }>();
+    const [parkingCoordinates, setParkingCoordinates] = useState({
+        latitude: 0,
+        longitude: 0,
+        name: ""
+    });
 
     useEffect(() => {
         console.log('Selected Location Coordinates Updated:', locationCoordinates);  // SHOW SELECTED LOCATION COORDS
@@ -67,6 +135,7 @@ const GPSMap = ({navigation}:Props) => {
 
     useEffect(() => {
         getLocation();      // SHOW INITIAL USER LOCATION WHEN MOUNTING
+        // console.log(userCoordinates.latitude);
         return () => {
             Geolocation.clearWatch(watchID);        // CLEAN UP WHEN COMPONENT UNMOUNTS
         };
@@ -126,6 +195,7 @@ const GPSMap = ({navigation}:Props) => {
     const getLocation = () => {
         Geolocation.getCurrentPosition(
             (position) => {
+
                 const { latitude, longitude } = position.coords;
                 setRegion({
                     ...region,
@@ -145,11 +215,75 @@ const GPSMap = ({navigation}:Props) => {
         watchID = Geolocation.watchPosition(         // IRL LOCATION UPDATE
             (position) => {
                 const { latitude, longitude } = position.coords;
+                // console.log(position.coords);
                 setRegion({
                     ...region,
                     latitude,
                     longitude,            
                 });
+                setUserCoordinates({    // GET USER COORDINATES TO USE IN APP
+                    ...userCoordinates,
+                    latitude,
+                    longitude,
+                });
+
+                // getMarkerById(regMarkerId);
+
+                const db = getDatabase();
+                const dbRef = ref(getDatabase());
+
+                
+                get(child(dbRef, `users/`)).then((snapshot) => {
+                    if (snapshot.exists()) {
+
+                        for (var i in snapshot.val()) {
+
+                            console.log(i);
+                           
+                            if (snapshot.val()[i].latitude !== undefined && snapshot.val()[i].longitude !== undefined) {
+                                
+                                // console.log("test", i, regMobile, snapshot.val()[i]);
+
+                                addMarker(snapshot.val()[i].latitude, snapshot.val()[i].longitude, i, snapshot.val()[i].parkingLot, require('./person.png'));
+                                
+                            }
+                        }
+
+                    } else {
+                        console.log("No data available");
+                    }
+                    }).catch((error) => {
+                    console.error(error);
+                });
+
+                // console.log("location update", userCoordinates.latitude);
+
+                updateMarker(regMarkerId, userCoordinates, parkingCoordinates.name);
+
+                // const db = getDatabase();
+                // const dbRef = ref(getDatabase());
+                /*
+                get(child(dbRef, `users/${regMobile}`)).then((snapshot) => {
+                    if (snapshot.exists()) {
+
+                        // ADD CURRENT LIVE COORDS TO DATABASE
+
+                            set(ref(db, 'users/' + regMobile), {
+                                password: snapshot.val().password,
+                                questionType : snapshot.val().questionType,
+                                answer: snapshot.val().answer,
+                                latitude: userCoordinates.latitude,
+                                longitude: userCoordinates.longitude,
+                                parkingLot: parkingCoordinates.name
+                            })
+
+                    } else {
+                        console.log("No data available");
+                    }
+                    }).catch((error) => {
+                    console.error(error);
+                });*/
+                        
             },
             (error) => console.log('Error. Unable to get live location updates.'),
         );
@@ -167,96 +301,121 @@ const GPSMap = ({navigation}:Props) => {
 
 
     // FILTER CONTROLS
-    const [shelter, setShelterFilter] = useState(false);    // DEFAULT FALSE
+    const [shelter, setShelterFilter] = useState(false);  // no shelter default
     const [filterDropdownVisible, setFilterDropdownVisible] = useState(false);
-    useEffect(() => {
-        console.log('Shelter bool: ', shelter);
-    }, [shelter]);
+    const [displayFilter, setDisplayFilter] = useState(5); // Default filter option
+
+    const filterSearch = (value: number) => {
+        setFilterDropdownVisible(false);
+        setDisplayFilter(value);
+        // JUST IMPORT {SELECTEDFILTER} FROM THIS COMPONENT
+        selectedFilter = displayFilter;     // UPDATE SELECTED FILTER TO EXPORT TO OTHER COMPONENTS
+    };
 
     const toggleFilterDropdown = () => {
         setFilterDropdownVisible(!filterDropdownVisible);
     };
 
     const handleShelterFilter = () => {
-        setShelterFilter(!shelter);
+        setShelterFilter(!shelterFilter);
         // JUST IMPORT {SHELTERFILTER} FROM THIS COMPONENT
         shelterFilter = shelter;    // UPDATE SHELTER FILTER TO EXPORT TO OTHER COMPONENTS
     };
 
-
-    const searchLots = async (lat: number, lon: number) => {
-    // Constants and API
+    const searchLots = async(lat: number, lon: number) => {
+        //Constants and api
         const apiUrl = 'http://datamall2.mytransport.sg/ltaodataservice/BicycleParkingv2';
         const accKey = 'xvBW6rA6TyGTNQlS8tK0Vg=='
-        const shelterIndicator = "placeholder"; //to be fixed later
+        // Determine the value of the shelter indicator based on the filter
+        const shelterFilter = shelterFilter 
       
         const params = new URLSearchParams({
             Lat: lat,
             Long: lon,
             Dist: '1',      // Default radius in kilometers. Can change if needed.
         });
+        // Implementation logic for bicycle lot search
+        
+        //get a json of the filtered lots based on if got shelter or no shelter according to the value of shelterFilter
       
-
-    // Implementation logic for bicycle lot search
         try {
+            // Make the API request using fetch with the SDK key in the Authorization header
             const response = await fetch(apiUrl + "?" + params.toString(), {
-                headers: {
-                    'AccountKey': accKey
-                }
+              headers: {
+                'AccountKey' : accKey
+              }
             });
 
+            const searchJSON = response.json(); 
+      
+            // console.log(await response.json());
             if (!response.ok) {
                 throw new Error('Network response was not ok');
             }
-
-            // Await the resolution of the JSON promise
-            const searchJSON = await response.json();
-
             // If shelterFilter is false, return all the parking lots
-            if (!shelter) {
+            if (!shelterFilter) {
                 return searchJSON;
-            } else {
+            } else if (shelterFilter) {
                 // Filter searchJSON and only return parking lots that have attribute "ShelterIndicator": "Y"
-                const filteredLots = searchJSON.value.filter((parkingLot: { ShelterIndicator: string; }) => parkingLot.ShelterIndicator === "Y");
-                return { "odata.metadata": searchJSON["odata.metadata"], "value": filteredLots };
+                const filteredLots = searchJSON.value.filter(parkingLot => parkingLot.ShelterIndicator === "Y");
+                return filteredLots;
             }
+
+      
         } catch (err) {
-            // Handle errors
-            console.error(err);
-            throw err;
+          // console.log(err);
         }
-    }
+      }
+
+
 
     // BICYCLE LOT IMPLEMENTATIONS
     const handleSearch = async () => {
-        seeLotCounter = 0;
+        // Implementation logic for bicycle search
+        // Get user input location -> convert to coordinates and compare with bicycle lots (if selected location coordinates is empty)
+
+        // get selected location input and compare with API coords, and display selected location and bike lots.
+
+        // console.log(locationCoordinates);
+
+        /*
+        const searchMarker = {
+            id: 1,
+            coordinate: locationCoordinates || { latitude: 0, longitude: 0 }, // Default coordinates or actual coordinates
+            title: `Search Location`,
+          };
+    
+        setMarkers([markers[0], searchMarker]);*/
         console.log('Handle search function executing...');
         const latitude = locationCoordinates?.latitude || 0;
         const longitude = locationCoordinates?.longitude || 0;
         setSearchCoordinates({ latitude, longitude });
 
-        const finalJSON = await searchLots(latitude, longitude);       // SEARCHING BICYCLE LOTS
-            console.log('Search lots function within handle search executing...');
-            // UP TILL HERE THE FINAL JSON FILE IS CORRECT FOR BOTH SHELTER FILTER TYPES
-            var disVal: any[] = [];
-            // console.log(finalJSON);
+        setRegion({
+            ...region,
+            latitude,
+            longitude,     
+            latitudeDelta: 0.01,
+            longitudeDelta: 0.01,       
+        });
 
-            // ITERATES THROUGH ALL VALUES, CALCULATES THE DISTANCE TO LOCATION, AND STORES IT IN ARRAY
-            for (var i in finalJSON.value) {
-                var pointLat = finalJSON.value[i]["Latitude"];
-                var pointLon = finalJSON.value[i]["Longitude"];
+        const searchJSON = await searchLots(latitude, longitude);       // SEARCHING BICYCLE LOTS
+            console.log('Search lots function within handle search executing...');
+            var disVal: any[] = [];
+
+            for (var i in searchJSON.value) {
+                var pointLat = searchJSON.value[i]["Latitude"];
+                var pointLon = searchJSON.value[i]["Longitude"];
                 disVal[disVal.length] = getDistanceFromLatLonInKm(latitude, longitude, pointLat, pointLon);
             }
 
-
-            console.log('disval:', disVal);
-            var indices = [...disVal.keys()]
+            var indices = [...disVal.keys()] // GET 5 SMALLEST DISTANCES
             .sort((a, b) => disVal[a] - disVal[b])
             .slice(0, 5);
 
             for (var i in indices) {
-                const latitude = finalJSON.value[indices[i]]["Latitude"];
-                const longitude = finalJSON.value[indices[i]]["Longitude"];
+                const latitude = searchJSON.value[indices[i]]["Latitude"];
+                const longitude = searchJSON.value[indices[i]]["Longitude"];
 
                 // console.log(pointLat, pointLon);
 
@@ -272,7 +431,7 @@ const GPSMap = ({navigation}:Props) => {
                     setParkingCoords5({ latitude, longitude });
                 }
             }
-        seeLotCounter = 5;
+        // console.log('Markers:', markers);
     };
 
 
@@ -284,6 +443,98 @@ const GPSMap = ({navigation}:Props) => {
     const closeModal = () => {
         setModalVisible(false);
     };
+
+    const shareModal = () => {
+
+        const link = "https://www.google.com/maps/place/" + parkingCoordinates.latitude + "," + parkingCoordinates.longitude;
+
+        // const link = "https://www.google.com/maps/dir/" + userCoordinates.latitude + "," + userCoordinates.longitude + "/" + parkingCoordinates.latitude + "," + parkingCoordinates.longitude;
+
+        // copyToClipboard(link);
+
+
+        const db = getDatabase();
+        const dbRef = ref(getDatabase());
+        get(child(dbRef, `users/${regMobile}`)).then((snapshot) => {
+            if (snapshot.exists()) {
+
+                // ADD CURRENT LIVE COORDS TO DATABASE
+
+                    console.log(snapshot.val().markerId);
+
+                    if (snapshot.val().markerId !== undefined) {
+
+                        set(ref(db, 'users/' + regMobile), {
+                            password: snapshot.val().password,
+                            questionType : snapshot.val().questionType,
+                            answer: snapshot.val().answer,
+                            latitude: userCoordinates.latitude,
+                            longitude: userCoordinates.longitude,
+                            parkingLot: parkingCoordinates.name,
+                            markerId: snapshot.val().markerId
+                        })
+
+                        // console.log(snapshot.val().parkingLot);
+                        // console.log(parkingCoordinates.name);
+
+                        updateMarker(snapshot.val().markerId, userCoordinates, parkingCoordinates.name);
+
+                        console.log("update marker");
+                    } else {
+
+                        set(ref(db, 'users/' + regMobile), {
+                            password: snapshot.val().password,
+                            questionType : snapshot.val().questionType,
+                            answer: snapshot.val().answer,
+                            latitude: userCoordinates.latitude,
+                            longitude: userCoordinates.longitude,
+                            parkingLot: parkingCoordinates.name,
+                            markerId: markers.length
+                        })
+
+                        regMarkerId = markers.length;
+                        addMarker(userCoordinates.latitude, userCoordinates.longitude, regMobile, parkingCoordinates.name, require('./person.png'));
+                    }
+
+                    // ADD CUSTOM MARKER TO LOCATION
+
+                    // if (getMarkerById(regMarkerId) === undefined) {
+                        // regMarkerId = markers.length + 1;
+                        // addMarker(userCoordinates.latitude, userCoordinates.longitude, regMobile, parkingCoordinates.name, require('./person.png'));
+                        // console.log(regMarkerId);
+                    /*} else {
+                        updateMarker(regMarkerId - 1, userCoordinates);
+                        console.log(regMarkerId);
+                    }*/
+
+                    // console.log(markers);
+
+            } else {
+                console.log("No data available");
+            }
+            }).catch((error) => {
+            console.error(error);
+        });
+
+        setModalVisible(false);
+
+    };
+    const directionsModal = () => {
+        const link = "https://www.google.com/maps/dir/" + userCoordinates.latitude + "," + userCoordinates.longitude + "/" + parkingCoordinates.latitude + "," + parkingCoordinates.longitude;
+
+        // FOLLOWS THIS FORMAT: https://www.google.com/maps/dir/[lat,lon]/[lat,lon]
+        console.log(link);
+
+        openGoogleMapsDirections(userCoordinates.latitude, userCoordinates.longitude, parkingCoordinates.latitude, parkingCoordinates.longitude);
+    }
+    const openGoogleMapsDirections = (startLat, startLng, endLat, endLng) => {
+        const url = `https://www.google.com/maps/dir/?api=1&origin=${startLat},${startLng}&destination=${endLat},${endLng}`;
+      
+        Linking.openURL(url).catch((err) => console.error('An error occurred', err));
+    };
+
+    const [shareButtonText, setButtonText] = useState('Share');
+
     const ParkingLotDetails = ({ modalVisible, closeModal, parkingLot }: { modalVisible: boolean; closeModal: () => void; parkingLot: any }) => (
         <Modal
             animationType="slide"
@@ -301,6 +552,12 @@ const GPSMap = ({navigation}:Props) => {
                             </View>
                         )}
                         <View style={styles.bottomContainer}>
+                            <TouchableOpacity style={styles.closeModalButton} onPress={directionsModal}>
+                                <Text style={styles.closeModalText}>Directions</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity style={styles.closeModalButton} onPress={shareModal}>
+                                <Text style={styles.closeModalText}>{shareButtonText}</Text>
+                            </TouchableOpacity>
                             <TouchableOpacity style={styles.closeModalButton} onPress={closeModal}>
                                 <Text style={styles.closeModalText}>Close</Text>
                             </TouchableOpacity>
@@ -309,10 +566,12 @@ const GPSMap = ({navigation}:Props) => {
                 </View>
         </Modal>
     );
-    
 
     const displayLots = async (parkingCoords: { latitude: any; longitude: any; }) => {
         // Implementation logic for displaylot details
+
+        const latitude = parkingCoords.latitude;
+        const longitude = parkingCoords.longitude;
 
         const apiUrl = 'http://datamall2.mytransport.sg/ltaodataservice/BicycleParkingv2';
         const accKey = 'xvBW6rA6TyGTNQlS8tK0Vg==';
@@ -320,7 +579,7 @@ const GPSMap = ({navigation}:Props) => {
         const params = new URLSearchParams({
             Lat: parkingCoords.latitude,
             Long: parkingCoords.longitude,
-            Dist: '10',      // Default radius in kilometers. Can change if needed.
+            Dist: '1',      // Default radius in kilometers. Can change if needed.
         });
 
         try {
@@ -346,7 +605,17 @@ const GPSMap = ({navigation}:Props) => {
                 parkingLot.Latitude === parkingCoords.latitude && parkingLot.Longitude === parkingCoords.longitude
             ));
 
+            const name = selectedParkingLot.Description;
+
             if (selectedParkingLot) {
+
+                setParkingCoordinates({    // GET USER COORDINATES TO USE IN APP
+                    ...parkingCoordinates,
+                    latitude,
+                    longitude,
+                    name
+                });
+
                 // Display the selected parking lot
                 console.log('Selected Parking Lot:', selectedParkingLot);
                 setSelectedLot(selectedParkingLot);
@@ -381,7 +650,7 @@ const GPSMap = ({navigation}:Props) => {
             const sortedIndices = disVal.map((val: any, index: number) => ({ index, val }))
                 .sort((a: { val: number; }, b: { val: number; }) => a.val - b.val)
                 .map(({ index }: { index: number }) => index)
-                .slice(seeLotCounter, seeLotCounter+5);
+                .slice(5, 10);
     
     
             // Iterate over the indices of the next 5 nearest lots
@@ -408,7 +677,6 @@ const GPSMap = ({navigation}:Props) => {
             console.error('Error fetching parking lot data:', error);
             // Handle errors (e.g., display an error message to the user)
         }
-        seeLotCounter += 5;
     };
     
     const handleHomeAddress = () => {
@@ -519,6 +787,15 @@ const GPSMap = ({navigation}:Props) => {
                     onPress={() => displayLots(parkingCoords5)}
                     />
                 }
+                {markers.map(marker => (
+                <Marker
+                    key={marker.id}
+                    coordinate={marker.coordinate}
+                    title={marker.title}
+                    description={marker.description}
+                    image={marker.image}
+                />
+                ))}
             </MapView>
             <ParkingLotDetails
                 modalVisible={modalVisible}
@@ -558,9 +835,12 @@ const GPSMap = ({navigation}:Props) => {
                 </TouchableOpacity>
                 {filterDropdownVisible && (
                     <View style={styles.dropdownContainer}>
-                        <Text style={styles.checkboxText}>Shelter</Text>
-                        <TouchableOpacity style={[styles.checkbox, shelter && styles.filterChecked]} onPress={handleShelterFilter}>
-                        </TouchableOpacity>
+                        <View style={styles.checkboxContainer}>
+                            <TouchableOpacity style={styles.checkbox} onPress={handleShelterFilter}>
+                                <Text style={styles.checkboxText}>Shelter</Text>
+                                <View style={[styles.checkboxBox, shelterFilter && styles.checkedBox]} />
+                            </TouchableOpacity>
+                        </View>
                     </View>
                 )}
                 {/* SEARCH BUTTON */}
@@ -654,6 +934,7 @@ const styles = StyleSheet.create({
         paddingVertical: 10,
         backgroundColor: 'white',
         borderRadius: 5,
+        marginTop: 10
     },
     closeModalText: {
         alignSelf: 'center',
@@ -686,32 +967,49 @@ const styles = StyleSheet.create({
     },
     dropdownContainer: {
         position: 'absolute',
-        flexDirection: 'row',
-        alignContent: 'space-between',
-        justifyContent: 'space-evenly',
-        right: 20,
-        height: 40,
-        width: 100,
-        top: 55,
+        top: 50,
+        right: 10,
         backgroundColor: '#fff',
         borderRadius: 5,
         elevation: 3,
         zIndex: 1,
     },
-    checkboxText: {
-        paddingTop: 10,
-        fontSize: 16,
+    dropdownOption: {
+        paddingVertical: 10,
+        paddingHorizontal: 20,
+    },
+    dropdownHeader: {
+        padding: 10,
+        alignSelf: 'center',
+        fontWeight: 'bold',
+        fontSize: 14,
+    },
+    dropdownText: {
+        fontSize: 14,
+        alignSelf: 'center',
+    },
+    checkboxContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        padding: 10,
     },
     checkbox: {
-        top: 10,
-        borderColor: 'black',
-        borderWidth: 1,
-        height: 20,
-        width: 20,
-        backgroundColor: 'white',
+        flexDirection: 'row',
     },
-    filterChecked: {
-        backgroundColor: '#48c289',
+    checkboxText: {
+        left: 20,
+        fontSize: 14,
+    },
+    checkboxBox: {
+        width: 20,
+        height: 20,
+        borderWidth: 1,
+        borderColor: '#000',
+        borderRadius: 3,
+        left: 60
+    },
+    checkedBox: {
+        backgroundColor: '#000',
     },
     searchButton: { 
         padding: 10,
