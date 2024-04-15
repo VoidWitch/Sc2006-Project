@@ -573,16 +573,6 @@ const GPSMap = ({navigation}:Props) => {
                                 <View style={[styles.checkboxBox, shelterFilter && styles.checkedBox]} />
                             </TouchableOpacity>
                         </View>
-                        <Text style={styles.dropdownHeader}>Number of lots displayed</Text>
-                        <TouchableOpacity style={styles.dropdownOption} onPress={() => filterSearch(5)}>
-                            <Text style={styles.dropdownText}>5 (Default)</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity style={styles.dropdownOption} onPress={() => filterSearch(10)}>
-                            <Text style={styles.dropdownText}>10</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity style={styles.dropdownOption} onPress={() => filterSearch(15)}>
-                            <Text style={styles.dropdownText}>15</Text>
-                        </TouchableOpacity>
                     </View>
                 )}
                 {/* SEARCH BUTTON */}
