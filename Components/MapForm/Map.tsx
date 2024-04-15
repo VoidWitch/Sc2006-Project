@@ -22,8 +22,8 @@ interface Props {
     navigation: ScreenNavigationProp;
 }
 
-export let selectedFilter = 5;        // DEFAULT
 export let shelterFilter = false;
+export let seeLotCounter = 0;
 
 const GPSMap = ({navigation}:Props) => {
 
@@ -229,7 +229,7 @@ const GPSMap = ({navigation}:Props) => {
 
     // BICYCLE LOT IMPLEMENTATIONS
     const handleSearch = async () => {
-        
+        seeLotCounter = 0;
         console.log('Handle search function executing...');
         const latitude = locationCoordinates?.latitude || 0;
         const longitude = locationCoordinates?.longitude || 0;
@@ -272,6 +272,7 @@ const GPSMap = ({navigation}:Props) => {
                     setParkingCoords5({ latitude, longitude });
                 }
             }
+        seeLotCounter = 5;
     };
 
 
@@ -380,7 +381,7 @@ const GPSMap = ({navigation}:Props) => {
             const sortedIndices = disVal.map((val: any, index: number) => ({ index, val }))
                 .sort((a: { val: number; }, b: { val: number; }) => a.val - b.val)
                 .map(({ index }: { index: number }) => index)
-                .slice(5, 10);
+                .slice(seeLotCounter, seeLotCounter+5);
     
     
             // Iterate over the indices of the next 5 nearest lots
@@ -407,6 +408,7 @@ const GPSMap = ({navigation}:Props) => {
             console.error('Error fetching parking lot data:', error);
             // Handle errors (e.g., display an error message to the user)
         }
+        seeLotCounter += 5;
     };
     
     const handleHomeAddress = () => {
