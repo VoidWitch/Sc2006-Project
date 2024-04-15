@@ -270,15 +270,15 @@ const GPSMap = ({navigation}:Props) => {
 
                 // console.log(pointLat, pointLon);
 
-                if (i == "0") {
+                if (i === "0") {
                     setParkingCoords1({ latitude, longitude });
-                } else if (i == "1") {
+                } else if (i === "1") {
                     setParkingCoords2({ latitude, longitude });
-                } else if (i == "2") {
+                } else if (i === "2") {
                     setParkingCoords3({ latitude, longitude });
-                } else if (i == "3") {
+                } else if (i === "3") {
                     setParkingCoords4({ latitude, longitude });
-                } else if (i == "4") {
+                } else if (i === "4") {
                     setParkingCoords5({ latitude, longitude });
                 }
             }
@@ -301,35 +301,28 @@ const GPSMap = ({navigation}:Props) => {
             visible={modalVisible}
             onRequestClose={closeModal}
         >
-            <TouchableOpacity style={styles.overlayLotDisplay} onPress={closeModal}>
                 <View style={styles.modalContainer}>
                     <View style={styles.modalContent}>
-                        <Text>Lot Information</Text>
-                        {/* Display selected lot information */}
                         {parkingLot && (
                             <View>
-                                <Text>Lot Name: {parkingLot.Description}</Text>
-                                <Text>Latitude: {parkingLot.Latitude}</Text>
-                                <Text>Longitude: {parkingLot.Longitude}</Text>
+                                <Text style={styles.lotName}>{parkingLot.Description}</Text>
                                 <Text>Rack Count: {parkingLot.RackCount}</Text>
-                                <Text>Rack Type: {parkingLot.RackType}</Text>
-                                <Text>Shelter Indicator: {parkingLot.ShelterIndicator}</Text>
-                                {/* Add more information as needed */}
+                                <Text style={styles.shelterIndicatorText}>Shelter Indicator: {parkingLot.ShelterIndicator}</Text>
                             </View>
                         )}
-                        <TouchableOpacity onPress={closeModal}>
-                            <Text>Close</Text>
-                        </TouchableOpacity>
+                        <View style={styles.bottomContainer}>
+                            <TouchableOpacity style={styles.closeModalButton} onPress={closeModal}>
+                                <Text style={styles.closeModalText}>Close</Text>
+                            </TouchableOpacity>
+                        </View>
                     </View>
                 </View>
-            </TouchableOpacity>
         </Modal>
     );
     
 
     const displayLots = async (parkingCoords: { latitude: any; longitude: any; }) => {
-        // Implementation logic for display
-        // After retrieving nearest 5, display on gmaps 
+        // Implementation logic for displaylot details
 
         const apiUrl = 'http://datamall2.mytransport.sg/ltaodataservice/BicycleParkingv2';
         const accKey = 'xvBW6rA6TyGTNQlS8tK0Vg==';
@@ -381,7 +374,7 @@ const GPSMap = ({navigation}:Props) => {
 
     const seeMoreLots = async () => {
         try {
-            // Get the user's current location coordinates
+            // Get specified location coordinates
             const latitude = locationCoordinates?.latitude || 0;
             const longitude = locationCoordinates?.longitude || 0;
             setSearchCoordinates({ latitude, longitude });
@@ -395,37 +388,38 @@ const GPSMap = ({navigation}:Props) => {
             ));
     
             // Sort distances and get the indices of the next 5 nearest lots
-            const sortedIndices = disVal.map((val: any, index: any) => ({ index, val }))
+            const sortedIndices = disVal.map((val: any, index: number) => ({ index, val }))
                 .sort((a: { val: number; }, b: { val: number; }) => a.val - b.val)
-                .map(({ index }) => index)
+                .map(({ index }: { index: number }) => index)
                 .slice(5, 10);
     
+    
             // Iterate over the indices of the next 5 nearest lots
-            for (var i in indices) {
-                const latitude = searchJSON.value[indices[i]]["Latitude"];
-                const longitude = searchJSON.value[indices[i]]["Longitude"];
-
+            for (let i: number = 0; i < sortedIndices.length; i++) {
+                const latitude = searchJSON.value[sortedIndices[i]]["Latitude"];
+                const longitude = searchJSON.value[sortedIndices[i]]["Longitude"];
+    
                 // console.log(pointLat, pointLon);
-
-                if (i == "5") {
+    
+                if (i === 0) {
                     setParkingCoords1({ latitude, longitude });
-                } else if (i == "6") {
+                } else if (i === 1) {
                     setParkingCoords2({ latitude, longitude });
-                } else if (i == "7") {
+                } else if (i === 2) {
                     setParkingCoords3({ latitude, longitude });
-                } else if (i == "8") {
+                } else if (i === 3) {
                     setParkingCoords4({ latitude, longitude });
-                } else if (i == "9") {
+                } else if (i === 4) {
                     setParkingCoords5({ latitude, longitude });
                 }
             }
-
+    
         } catch (error) {
             console.error('Error fetching parking lot data:', error);
             // Handle errors (e.g., display an error message to the user)
         }
     };
-
+    
     const handleHomeAddress = () => {
         // // UPLOAD SELECTED LOCATION WITH HOME COORDINATES
         console.log('Home coordinates:', {homeCoordinates});
@@ -499,7 +493,7 @@ const GPSMap = ({navigation}:Props) => {
                     coordinate={parkingCoords1}
                     title="Bike Parking 1"
                     pinColor="blue"
-                    onPress={() => displayLots(parkingCoords1)}
+                    onPress={() => displayLots(parkingCoords1)}     // DISPLAY LOT DETAILS
                     />
                 }
                 {
@@ -632,6 +626,13 @@ const GPSMap = ({navigation}:Props) => {
                     </View>
                 </>
             )}
+
+        <View style={styles.bottomButtonContainer}>
+            <TouchableOpacity style={styles.seeMoreLotsButton} onPress={seeMoreLots}>
+                <Text style={styles.seeMoreLotsButtonText}>See More Lots</Text>
+            </TouchableOpacity>
+        </View>
+
         </View>
     );
 };
@@ -645,13 +646,11 @@ const styles = StyleSheet.create({
         flex: 1,
         ...StyleSheet.absoluteFillObject,
     },
-    overlayLotDisplay: {
-        flex: 1,
-        backgroundColor: 'transparent',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
     modalContainer: {
+        position: 'absolute',
+        top: 280,
+        width: '70%',
+        left: 50,
         justifyContent: 'center',
         alignItems: 'center',
     },
@@ -660,6 +659,27 @@ const styles = StyleSheet.create({
         padding: 20,
         borderRadius: 10,
         width: '80%',
+    },
+    lotName: {
+        textAlign: 'left',
+        fontWeight: 'bold',
+    },
+    shelterIndicatorText: {
+        textAlign: 'left',
+    },
+    bottomContainer: {
+        marginTop: 10, // Adjust as needed
+        alignItems: 'center',
+    },
+    closeModalButton: {
+        width: '50%',
+        paddingVertical: 10,
+        backgroundColor: 'white',
+        borderRadius: 5,
+    },
+    closeModalText: {
+        alignSelf: 'center',
+        color: 'black',
     },
     searchContainer: {
         position: 'absolute',
@@ -849,6 +869,22 @@ const styles = StyleSheet.create({
         left: 0,
         right: 0,
         backgroundColor: 'rgba(0, 0, 0, 0.5)', // Semi-transparent black overlay
+    },
+    bottomButtonContainer: {
+        position: 'absolute',
+        bottom: 20,
+        alignSelf: 'center',
+    },
+    seeMoreLotsButton: {
+        backgroundColor: '#48c289',
+        paddingVertical: 10,
+        paddingHorizontal: 20,
+        borderRadius: 10,
+    },
+    seeMoreLotsButtonText: {
+        color: '#fff',
+        fontSize: 16,
+        fontWeight: 'bold',
     },
 });
 
