@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Alert, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, Image, Modal, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 import Geolocation from '@react-native-community/geolocation';
 import {regMobile} from '../LoginForm/Login';
@@ -285,20 +285,68 @@ const GPSMap = ({navigation}:Props) => {
         // console.log('Markers:', markers);
     };
 
-   const displayLots = async (parkingCoords: { latitude: any; longitude: any; }) => {
+
+    const [selectedLot, setSelectedLot] = useState(null); // State to store the selected parking lot
+    const [modalVisible, setModalVisible] = useState(false); // State to manage modal visibility
+    const openModal = (parkingLot: any) => {
+        setModalVisible(true);
+    };
+    const closeModal = () => {
+        setModalVisible(false);
+    };
+    const ParkingLotDetails = ({ modalVisible, closeModal, parkingLot }: { modalVisible: boolean; closeModal: () => void; parkingLot: any }) => (
+        <Modal
+            animationType="slide"
+            transparent={true}
+            visible={modalVisible}
+            onRequestClose={closeModal}
+        >
+            <TouchableOpacity style={styles.overlayLotDisplay} onPress={closeModal}>
+                <View style={styles.modalContainer}>
+                    <View style={styles.modalContent}>
+                        <Text>Lot Information</Text>
+                        {/* Display selected lot information */}
+                        {parkingLot && (
+                            <View>
+                                <Text>Lot Name: {parkingLot.Description}</Text>
+                                <Text>Latitude: {parkingLot.Latitude}</Text>
+                                <Text>Longitude: {parkingLot.Longitude}</Text>
+                                <Text>Rack Count: {parkingLot.RackCount}</Text>
+                                <Text>Rack Type: {parkingLot.RackType}</Text>
+                                <Text>Shelter Indicator: {parkingLot.ShelterIndicator}</Text>
+                                {/* Add more information as needed */}
+                            </View>
+                        )}
+                        <TouchableOpacity onPress={closeModal}>
+                            <Text>Close</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </TouchableOpacity>
+        </Modal>
+    );
+    
+
+    const displayLots = async (parkingCoords: { latitude: any; longitude: any; }) => {
         // Implementation logic for display
         // After retrieving nearest 5, display on gmaps 
 
         const apiUrl = 'http://datamall2.mytransport.sg/ltaodataservice/BicycleParkingv2';
         const accKey = 'xvBW6rA6TyGTNQlS8tK0Vg==';
 
+        const params = new URLSearchParams({
+            Lat: parkingCoords.latitude,
+            Long: parkingCoords.longitude,
+            Dist: '1',      // Default radius in kilometers. Can change if needed.
+        });
+
         try {
             // Fetch parking lot data from the LTA API
-            const response = await fetch(apiUrl, {
+            const response = await fetch(apiUrl + "?" + params.toString(), {
                 headers: {
-                    'AccountKey': accKey
+                  'AccountKey' : accKey
                 }
-            });
+              });
 
             if (!response.ok) {
                 throw new Error('Failed to fetch parking lot data');
@@ -317,20 +365,18 @@ const GPSMap = ({navigation}:Props) => {
 
             if (selectedParkingLot) {
                 // Display the selected parking lot
-                console.log('Selected Parking Lot:', selectedParkingLot); 
+                console.log('Selected Parking Lot:', selectedParkingLot);
+                setSelectedLot(selectedParkingLot);
+                openModal(selectedLot);
                 // Add frontend logic here to display the selected parking lot in your UI (its in the marker onpress)
             } else {
                 console.log('No matching parking lot found for the given coordinates.');
             }
-    
-        
 
         } catch (error) {
             console.error('Error:', error);
             // Handle errors (e.g., display an error message to the user)
         }
-
-
     };
 
     const seeMoreLots = async () => {
@@ -488,8 +534,12 @@ const GPSMap = ({navigation}:Props) => {
                     onPress={() => displayLots(parkingCoords5)}
                     />
                 }
-
             </MapView>
+            <ParkingLotDetails
+                modalVisible={modalVisible}
+                closeModal={closeModal}
+                parkingLot={selectedLot}
+            />
 
             {/* SEARCH BAR, FILTER BUTTON, SEARCH BUTTON */}
             {/* ALLOWS USER TO SEARCH AND SELECT A LOCATION, LOCATION COORDS UPDATED IN const(locationCoordinates) */}
@@ -594,6 +644,22 @@ const styles = StyleSheet.create({
     map: {
         flex: 1,
         ...StyleSheet.absoluteFillObject,
+    },
+    overlayLotDisplay: {
+        flex: 1,
+        backgroundColor: 'transparent',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    modalContainer: {
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    modalContent: {
+        backgroundColor: '#48c289',
+        padding: 20,
+        borderRadius: 10,
+        width: '80%',
     },
     searchContainer: {
         position: 'absolute',
