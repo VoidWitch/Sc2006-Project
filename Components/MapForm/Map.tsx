@@ -275,6 +275,12 @@ const GPSMap = ({navigation}:Props) => {
         const longitude = locationCoordinates?.longitude || 0;
         setSearchCoordinates({ latitude, longitude });
 
+        setRegion({
+            ...region,
+            latitude,
+            longitude,            
+        });
+
         const searchJSON = await searchLots(latitude, longitude);       // SEARCHING BICYCLE LOTS
             console.log('Search lots function within handle search executing...');
             var disVal: any[] = [];
