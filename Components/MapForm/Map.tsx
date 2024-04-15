@@ -6,6 +6,8 @@ import {regMobile} from '../LoginForm/Login';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
 import { homeCoordinates } from '../AddressesForm/Addresses';
+import Clipboard from '@react-native-clipboard/clipboard';
+import { Linking } from 'react-native';
 
 
 type RootStackParamList = {
@@ -24,6 +26,11 @@ interface Props {
 
 export let selectedFilter = 5;        // DEFAULT
 export let shelterFilter = false;
+
+const copyToClipboard = async (text) => {
+    await Clipboard.setString(text);
+    alert('Link copied to clipboard');
+  };
 
 const GPSMap = ({navigation}:Props) => {
 
@@ -60,6 +67,10 @@ const GPSMap = ({navigation}:Props) => {
         longitude: 0,
     });
     const [locationCoordinates, setLocationCoordinates] = useState<{ latitude: number; longitude: number }>();
+    const [parkingCoordinates, setParkingCoordinates] = useState({
+        latitude: 0,
+        longitude: 0,
+    });
 
     useEffect(() => {
         console.log('Selected Location Coordinates Updated:', locationCoordinates);  // SHOW SELECTED LOCATION COORDS
@@ -67,6 +78,7 @@ const GPSMap = ({navigation}:Props) => {
 
     useEffect(() => {
         getLocation();      // SHOW INITIAL USER LOCATION WHEN MOUNTING
+        // console.log(userCoordinates.latitude);
         return () => {
             Geolocation.clearWatch(watchID);        // CLEAN UP WHEN COMPONENT UNMOUNTS
         };
@@ -145,10 +157,16 @@ const GPSMap = ({navigation}:Props) => {
         watchID = Geolocation.watchPosition(         // IRL LOCATION UPDATE
             (position) => {
                 const { latitude, longitude } = position.coords;
+                // console.log(position.coords);
                 setRegion({
                     ...region,
                     latitude,
                     longitude,            
+                });
+                setUserCoordinates({    // GET USER COORDINATES TO USE IN APP
+                    ...userCoordinates,
+                    latitude,
+                    longitude,
                 });
             },
             (error) => console.log('Error. Unable to get live location updates.'),
@@ -192,18 +210,17 @@ const GPSMap = ({navigation}:Props) => {
         //Constants and api
         const apiUrl = 'http://datamall2.mytransport.sg/ltaodataservice/BicycleParkingv2';
         const accKey = 'xvBW6rA6TyGTNQlS8tK0Vg=='
-        const shelterIndicator = "placeholder"; //to be fixed later
+        // Determine the value of the shelter indicator based on the filter
+        const shelterFilter = shelterFilter 
       
         const params = new URLSearchParams({
             Lat: lat,
             Long: lon,
             Dist: '1',      // Default radius in kilometers. Can change if needed.
         });
-      
-        // Implementation logic for bicycle search
-        // Call filterSearch and get both filteredResults and searchCoordinates
+        // Implementation logic for bicycle lot search
         
-        //get a json of the filtered lots based on if got shelter or no shelter
+        //get a json of the filtered lots based on if got shelter or no shelter according to the value of shelterFilter
       
         try {
             // Make the API request using fetch with the SDK key in the Authorization header
@@ -213,13 +230,21 @@ const GPSMap = ({navigation}:Props) => {
               }
             });
 
-            return await response.json();
+            const searchJSON = response.json(); 
       
             // console.log(await response.json());
-            
             if (!response.ok) {
                 throw new Error('Network response was not ok');
             }
+            // If shelterFilter is false, return all the parking lots
+            if (!shelterFilter) {
+                return searchJSON;
+            } else if (shelterFilter) {
+                // Filter searchJSON and only return parking lots that have attribute "ShelterIndicator": "Y"
+                const filteredLots = searchJSON.value.filter(parkingLot => parkingLot.ShelterIndicator === "Y");
+                return filteredLots;
+            }
+
       
         } catch (err) {
           // console.log(err);
@@ -294,6 +319,28 @@ const GPSMap = ({navigation}:Props) => {
     const closeModal = () => {
         setModalVisible(false);
     };
+    const shareModal = () => {
+
+        const link = "https://www.google.com/maps/place/" + parkingCoordinates.latitude + "," + parkingCoordinates.longitude;
+
+        // const link = "https://www.google.com/maps/dir/" + userCoordinates.latitude + "," + userCoordinates.longitude + "/" + parkingCoordinates.latitude + "," + parkingCoordinates.longitude;
+
+        copyToClipboard(link);
+
+    };
+    const directionsModal = () => {
+        const link = "https://www.google.com/maps/dir/" + userCoordinates.latitude + "," + userCoordinates.longitude + "/" + parkingCoordinates.latitude + "," + parkingCoordinates.longitude;
+
+        // FOLLOWS THIS FORMAT: https://www.google.com/maps/dir/[lat,lon]/[lat,lon]
+        console.log(link);
+
+        openGoogleMapsDirections(userCoordinates.latitude, userCoordinates.longitude, parkingCoordinates.latitude, parkingCoordinates.longitude);
+    }
+    const openGoogleMapsDirections = (startLat, startLng, endLat, endLng) => {
+        const url = `https://www.google.com/maps/dir/?api=1&origin=${startLat},${startLng}&destination=${endLat},${endLng}`;
+      
+        Linking.openURL(url).catch((err) => console.error('An error occurred', err));
+    };
     const ParkingLotDetails = ({ modalVisible, closeModal, parkingLot }: { modalVisible: boolean; closeModal: () => void; parkingLot: any }) => (
         <Modal
             animationType="slide"
@@ -311,6 +358,12 @@ const GPSMap = ({navigation}:Props) => {
                             </View>
                         )}
                         <View style={styles.bottomContainer}>
+                            <TouchableOpacity style={styles.closeModalButton} onPress={directionsModal}>
+                                <Text style={styles.closeModalText}>Directions</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity style={styles.closeModalButton} onPress={shareModal}>
+                                <Text style={styles.closeModalText}>Share</Text>
+                            </TouchableOpacity>
                             <TouchableOpacity style={styles.closeModalButton} onPress={closeModal}>
                                 <Text style={styles.closeModalText}>Close</Text>
                             </TouchableOpacity>
@@ -319,10 +372,12 @@ const GPSMap = ({navigation}:Props) => {
                 </View>
         </Modal>
     );
-    
 
     const displayLots = async (parkingCoords: { latitude: any; longitude: any; }) => {
         // Implementation logic for displaylot details
+
+        const latitude = parkingCoords.latitude;
+        const longitude = parkingCoords.longitude;
 
         const apiUrl = 'http://datamall2.mytransport.sg/ltaodataservice/BicycleParkingv2';
         const accKey = 'xvBW6rA6TyGTNQlS8tK0Vg==';
@@ -357,6 +412,13 @@ const GPSMap = ({navigation}:Props) => {
             ));
 
             if (selectedParkingLot) {
+
+                setParkingCoordinates({    // GET USER COORDINATES TO USE IN APP
+                    ...parkingCoordinates,
+                    latitude,
+                    longitude,
+                });
+
                 // Display the selected parking lot
                 console.log('Selected Parking Lot:', selectedParkingLot);
                 setSelectedLot(selectedParkingLot);
@@ -666,6 +728,7 @@ const styles = StyleSheet.create({
         paddingVertical: 10,
         backgroundColor: 'white',
         borderRadius: 5,
+        marginTop: 10
     },
     closeModalText: {
         alignSelf: 'center',
