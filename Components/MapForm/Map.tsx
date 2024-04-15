@@ -7,6 +7,7 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
 import { homeCoordinates } from '../AddressesForm/Addresses';
 
+
 type RootStackParamList = {
     'FAQ': undefined;
     'Privacy Concerns': undefined;
@@ -29,7 +30,7 @@ const GPSMap = ({navigation}:Props) => {
     const mapViewRef = useRef<MapView>(null);
 
     // RETURN DISTANCES BETWEEN COORDS
-    const getDistanceFromLatLonInKm = (lat1, lon1, lat2, lon2) => {
+    const getDistanceFromLatLonInKm = (lat1: number, lon1: number, lat2: number, lon2: number) => {
     var R = 6371; // Radius of the earth in km
     var dLat = deg2rad(lat2-lat1);  // deg2rad below
     var dLon = deg2rad(lon2-lon1); 
@@ -43,7 +44,7 @@ const GPSMap = ({navigation}:Props) => {
     return d;
     };
       
-    const deg2rad = (deg) => {
+    const deg2rad = (deg: number) => {
     return deg * (Math.PI/180);
     };
     
@@ -86,26 +87,41 @@ const GPSMap = ({navigation}:Props) => {
         latitude: 0,
         longitude: 0,
     });
+    useEffect(() => {
+        console.log('Parking coords 1: ', parkingCoords1);
+    }, [parkingCoords1]);
 
     const [parkingCoords2, setParkingCoords2] = useState({
         latitude: 0,
         longitude: 0,
     });
+    useEffect(() => {
+        console.log('Parking coords 2: ', parkingCoords2);
+    }, [parkingCoords2]);
 
     const [parkingCoords3, setParkingCoords3] = useState({
         latitude: 0,
         longitude: 0,
     });
+    useEffect(() => {
+        console.log('Parking coords 3: ', parkingCoords3);
+    }, [parkingCoords3]);
 
     const [parkingCoords4, setParkingCoords4] = useState({
         latitude: 0,
         longitude: 0,
     });
+    useEffect(() => {
+        console.log('Parking coords 4: ', parkingCoords4);
+    }, [parkingCoords4]);
 
     const [parkingCoords5, setParkingCoords5] = useState({
         latitude: 0,
         longitude: 0,
     });
+    useEffect(() => {
+        console.log('Parking coords 5: ', parkingCoords5);
+    }, [parkingCoords5]);
 
     const getLocation = () => {
         Geolocation.getCurrentPosition(
@@ -172,7 +188,7 @@ const GPSMap = ({navigation}:Props) => {
         shelterFilter = shelter;    // UPDATE SHELTER FILTER TO EXPORT TO OTHER COMPONENTS
     };
 
-    const searchLots = async(lat, lon) => {
+    const searchLots = async(lat: number, lon: number) => {
         //Constants and api
         const apiUrl = 'http://datamall2.mytransport.sg/ltaodataservice/BicycleParkingv2';
         const accKey = 'xvBW6rA6TyGTNQlS8tK0Vg=='
@@ -181,7 +197,7 @@ const GPSMap = ({navigation}:Props) => {
         const params = new URLSearchParams({
             Lat: lat,
             Long: lon,
-            Dist: '1', // Default radius in kilometers. Can change if needed.
+            Dist: '1',      // Default radius in kilometers. Can change if needed.
         });
       
         // Implementation logic for bicycle search
@@ -229,14 +245,14 @@ const GPSMap = ({navigation}:Props) => {
           };
     
         setMarkers([markers[0], searchMarker]);*/
-
+        console.log('Handle search function executing...');
         const latitude = locationCoordinates?.latitude || 0;
         const longitude = locationCoordinates?.longitude || 0;
         setSearchCoordinates({ latitude, longitude });
 
-        const searchJSON = await searchLots(latitude, longitude);
-
-            var disVal = [];
+        const searchJSON = await searchLots(latitude, longitude);       // SEARCHING BICYCLE LOTS
+            console.log('Search lots function within handle search executing...');
+            var disVal: any[] = [];
 
             for (var i in searchJSON.value) {
                 var pointLat = searchJSON.value[i]["Latitude"];
@@ -265,13 +281,11 @@ const GPSMap = ({navigation}:Props) => {
                 } else if (i == "4") {
                     setParkingCoords5({ latitude, longitude });
                 }
-
             }
-
         // console.log('Markers:', markers);
     };
 
-   const displayLots = async (parkingCoords) => {
+   const displayLots = async (parkingCoords: { latitude: any; longitude: any; }) => {
         // Implementation logic for display
         // After retrieving nearest 5, display on gmaps 
 
@@ -297,14 +311,14 @@ const GPSMap = ({navigation}:Props) => {
             
             // find the parking lot value from parkingLots for the one with matching coordinate of parkingCoords passed in
              // Find the parking lot with coordinates matching parkingCoords
-            const selectedParkingLot = parkingLots.find(parkingLot => (
+            const selectedParkingLot = parkingLots.find((parkingLot: { Latitude: any; Longitude: any; }) => (
                 parkingLot.Latitude === parkingCoords.latitude && parkingLot.Longitude === parkingCoords.longitude
             ));
 
             if (selectedParkingLot) {
                 // Display the selected parking lot
                 console.log('Selected Parking Lot:', selectedParkingLot); 
-                // Add frontend logic here to display the selected parking lot in your UI 
+                // Add frontend logic here to display the selected parking lot in your UI (its in the marker onpress)
             } else {
                 console.log('No matching parking lot found for the given coordinates.');
             }
@@ -330,13 +344,13 @@ const GPSMap = ({navigation}:Props) => {
             const searchJSON = await searchLots(latitude, longitude);
     
             // Calculate distances for all lots and store them in an array
-            const disVal = searchJSON.value.map(lot => (
+            const disVal = searchJSON.value.map((lot: { Latitude: number; Longitude: number; }) => (
                 getDistanceFromLatLonInKm(latitude, longitude, lot.Latitude, lot.Longitude)
             ));
     
             // Sort distances and get the indices of the next 5 nearest lots
-            const sortedIndices = disVal.map((val, index) => ({ index, val }))
-                .sort((a, b) => a.val - b.val)
+            const sortedIndices = disVal.map((val: any, index: any) => ({ index, val }))
+                .sort((a: { val: number; }, b: { val: number; }) => a.val - b.val)
                 .map(({ index }) => index)
                 .slice(5, 10);
     
