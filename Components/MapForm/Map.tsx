@@ -643,9 +643,9 @@ const GPSMap = ({navigation}:Props) => {
                             </View>
                         )}
                         <View style={styles.bottomContainer}>
-                            {/*<TouchableOpacity style={styles.closeModalButton} onPress={directionsModal}>
+                            <TouchableOpacity style={styles.closeModalButton} onPress={directionsModal}>
                                 <Text style={styles.closeModalText}>Directions</Text>
-                    </TouchableOpacity>*/}
+                            </TouchableOpacity>
                             <TouchableOpacity style={styles.closeModalButton} onPress={shareModal}>
                                 <Text style={styles.closeModalText}>{shareButtonText}</Text>
                             </TouchableOpacity>
