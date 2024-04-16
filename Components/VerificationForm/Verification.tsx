@@ -1,7 +1,6 @@
 import { StackNavigationProp } from '@react-navigation/stack';
 import React, { useState, useEffect } from 'react'; 
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, Alert } from 'react-native'; 
-
 import { initializeApp } from "firebase/app";
 import { getDatabase, ref, set, get, push, update, child } from "firebase/database";
 import {regMobile} from './../LoginForm/Login';
@@ -17,11 +16,10 @@ const firebaseConfig = {
     measurementId: "G-3WGYQ5T50W"
 };
   
-// INITIALIZE FIREBASE
 const app = initializeApp(firebaseConfig);
 
 type RootStackParamList = {
-    'Cycle Savvy': undefined;	    // SUCCESSFUL VERIFICATION REDIRECTS USER TO MAIN SCREEN
+    'Cycle Savvy': undefined;
 };
   
 type ScreenNavigationProp = StackNavigationProp<RootStackParamList>;
@@ -30,42 +28,50 @@ interface Props {
     navigation: ScreenNavigationProp;
 }
 
+/**
+ * Represents the phone verification screen component.
+ * 
+ * @param {Props} props - The component props containing navigation.
+ * @returns {React.ReactElement} The phone verification screen component.
+ */
 const PhoneVerificationScreen = ({navigation}:Props) => { 
+    /**
+     * State hook to manage the user's answer input.
+     */
     const [answer, setText] = useState(''); 
+    /**
+     * State hook to manage the security question text.
+     */
     const [securityQuestion, setSecurityQuestion] = useState('');
+    /**
+     * State hook to manage the security answer text.
+     */
     const [securityAnswer, setSecurityAnswer] = useState('');
 
+    /**
+     * useEffect hook to fetch user data from Firebase database.
+     */
     useEffect(() => {
         const fetchData = async () => {
             const dbRef = ref(getDatabase());
             const snapshot = await get(child(dbRef, `users/${regMobile}`));
-
-            if (snapshot.exists()) {    // IF USER EXISTS
+    
+            if (snapshot.exists()) {
                 const userData = snapshot.val();
-                setSecurityQuestion(userData.questionType);     // RETRIEVE SECURITY QN
-            } else {
-                console.log('Error, question not found');
-            }
-        };
-        fetchData();
-    }, []);     // RUN WHEN COMPONENT MOUNTS
-
-    useEffect(() => {
-        const fetchData = async () => {
-            const dbRef = ref(getDatabase());
-            const snapshot = await get(child(dbRef, `users/${regMobile}`));
-
-            if (snapshot.exists()) {        // SAME FOR RETRIEVAL OF USER SECURITY ANSWER
-                const userData = snapshot.val();
+                setSecurityQuestion(userData.questionType);
                 setSecurityAnswer(userData.answer);
+                console.log(userData);
             } else {
-                console.log('Error, answer not found');
+                console.log('Error, user data not found');
             }
         };
         fetchData();
     }, []);
-
-    const verifyCode = () => {  // VERIFY SECURITY ANS, IGNORE CASE
+    
+    /**
+     * Function to verify the user's answer to the security question.
+     */
+    const verifyCode = () => {
         if (answer.toLowerCase() === securityAnswer.toLowerCase()) {
             handleVerified();
         }
@@ -74,9 +80,12 @@ const PhoneVerificationScreen = ({navigation}:Props) => {
         }
     };
 
+    /**
+     * Function to handle the verification process when the answer is correct.
+     */
     const handleVerified = () => {
         console.log('Logging in...');
-        navigation.replace('Cycle Savvy');      // REDIRECT TO MAIN PAGE
+        navigation.replace('Cycle Savvy');
     }
 
     return (
