@@ -1,13 +1,7 @@
-//  AIzaSyDlRXMUhwmnCmDXpntaFkL66-vI6cMxWrY   -- Google Maps API key
-
-import 'react-native-gesture-handler';    //navigation stack, include at top
+import 'react-native-gesture-handler';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import React, { useEffect } from 'react';
-
-// FIREBASE (DATABASE)
-// install firebase to root of project directory, $ npm install firebase
-
 import { initializeApp } from "firebase/app";
 import { getDatabase, ref, set, get, push, update, child, remove } from "firebase/database";
 
@@ -22,9 +16,16 @@ const firebaseConfig = {
   measurementId: "G-3WGYQ5T50W"
 };
 
-// Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
+/**
+ * Writes user data to the Firebase database.
+ * 
+ * @param {string} mobile - The mobile number of the user.
+ * @param {string} password - The password of the user.
+ * @param {string} questionType - The type of security question.
+ * @param {string} answer - The answer to the security question.
+ */
 export function writeUserData(mobile: string, password: string, questionType: string, answer: string) {
   const db = getDatabase();
   const reference = ref(db, 'users/' + mobile);
@@ -35,6 +36,12 @@ export function writeUserData(mobile: string, password: string, questionType: st
   });
 }
 
+/**
+ * Updates user data in the Firebase database.
+ * 
+ * @param {string} mobile - The mobile number of the user.
+ * @param {string} password - The new password.
+ */
 export function updateUserData(mobile: string, password: string) {
   const db = getDatabase();
   const userRef = ref(db, 'users/' + mobile);
@@ -48,29 +55,27 @@ export function updateUserData(mobile: string, password: string) {
   });
 }
 
-//Component Forms
 import Login from './LoginForm/Login'
 import ResetPw from './ResetPwForm/ResetPw';
 import Verification from './VerificationForm/Verification';
 import RegisterUser from './RegisterUserForm/RegisterUser';
 import Addresses from './AddressesForm/Addresses';
-
 import FAQ from './FAQForm/FAQ';
 import PrivacyConcerns from './PrivacyForm/PrivacyConcerns';
-import Map from './MapForm/Map';    // CHANGE BACK TO MAP LATER THIS IS THE WRONG SCREEN
+import Map from './MapForm/Map';
 import ShareRide from './ShareRideForm/ShareRide'
 import ChangePw from './ChangePwForm/ChangePw';
-
 
 const Stack = createStackNavigator();
 
 function App(): React.JSX.Element {
-
-    // IF WANT TO MAINTAIN USER ENTRIES, COMMENT OUT THIS FUNCTION
-    useEffect(() => {     // DELETE ALL USER ENTRIES WHEN COMPONENT UNMOUNTS
+    /**
+     * useEffect hook to delete all user entries when the component unmounts.
+     */
+    useEffect(() => {
         return () => {
             const db = getDatabase();
-            const reference = ref(db, 'users'); // REFERENCE TO USERS NODE TO CLEAR ENTRIES
+            const reference = ref(db, 'users');
             remove(reference).then(() => {
                 console.log('Entries deleted successfully.');
             })
@@ -88,7 +93,6 @@ function App(): React.JSX.Element {
             <Stack.Screen name="Register User" component={RegisterUser} />
             <Stack.Screen name="Reset Password" component={ResetPw} />
             <Stack.Screen name="Verification" component={Verification} options={{ headerShown: false }}/>
-
             <Stack.Screen name="Saved Addresses" component={Addresses} />
             <Stack.Screen name="FAQ" component={FAQ} />
             <Stack.Screen name="Privacy Concerns" component={PrivacyConcerns} />
