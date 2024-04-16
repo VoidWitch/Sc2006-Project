@@ -24,7 +24,7 @@ const faqData = [
     },
     {
         question: 'How can I contact customer support?',
-        answer: 'Customer support can be reached via email at support@CycleSavvy.com or by phone at 9060 8359.',
+        answer: 'Customer support can be reached via email at support@CycleSavvy.com or by phone at 9652 4545.',
     },
     {
         question: 'How do I report a problem or bug?',
