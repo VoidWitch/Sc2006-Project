@@ -98,7 +98,7 @@ const GPSMap = ({navigation}:Props) => {
         }, 0);*/
     }
 
-    const addMarker = (id, latitude, longitude, title, description, image, route) => {
+    const addMarker = (id, latitude, longitude, title, description, image) => {
         const newMarker = {
         id: id || markers.length, // Unique ID for the marker
           coordinate: {
@@ -107,8 +107,7 @@ const GPSMap = ({navigation}:Props) => {
           },
           title,
           description,
-          image,
-          route
+          image
         }; 
       
         setMarkers(markers => markers.concat(newMarker));
@@ -300,7 +299,7 @@ const GPSMap = ({navigation}:Props) => {
                                         longitude : snapshot.val()[i].parkingLotLongitude
                                     }
 
-                                    addMarker(markerCount, snapshot.val()[i].latitude, snapshot.val()[i].longitude, i + mod, snapshot.val()[i].parkingLot, require('./person.png'));
+                                    addMarker(markerCount, snapshot.val()[i].latitude, snapshot.val()[i].longitude, i + mod, "Destination: " + snapshot.val()[i].parkingLot, require('./person.png'));
                                     
                                     markerCount++;
 
@@ -327,6 +326,13 @@ const GPSMap = ({navigation}:Props) => {
         );
     };
 
+    const [showGroupsPanel, setShowGroupsPanel] = useState(false);
+    const handleToggleGroups = () => {
+        setShowGroupsPanel(!showGroupsPanel);
+    };
+    const handleCloseGroups = () => {
+        setShowGroupsPanel(false);
+    };
 
     // SIDE PANEL CONTROLS
     const [showSidePanel, setShowSidePanel] = useState(false);
@@ -488,6 +494,7 @@ const GPSMap = ({navigation}:Props) => {
         // console.log('Markers:', markers);
     };
 
+    const [groupText, setGroupText] = useState('User ID');
 
     const [selectedLot, setSelectedLot] = useState(null); // State to store the selected parking lot
     const [modalVisible, setModalVisible] = useState(false); // State to manage modal visibility
@@ -496,6 +503,49 @@ const GPSMap = ({navigation}:Props) => {
     };
     const closeModal = () => {
         setModalVisible(false);
+    };
+
+    const updateText = (id) => {
+
+        // up to database
+
+        const db = getDatabase();
+        const dbRef = ref(getDatabase());
+        get(child(dbRef, `users/${id}`)).then((snapshot) => {
+            if (snapshot.exists()) {
+
+                    if (snapshot.val().markerId !== undefined) {
+
+                        set(ref(db, 'users/' + regMobile), {
+                            password: snapshot.val().password,
+                            questionType : snapshot.val().questionType,
+                            answer: snapshot.val().answer,
+                            latitude: userCoordinates.latitude,
+                            longitude: userCoordinates.longitude,
+                            parkingLot: parkingCoordinates.name,
+                            parkingLotLatitude : parkingCoordinates.latitude,
+                            parkingLotLongitude : parkingCoordinates.longitude,
+                            markerId: snapshot.val().markerId,
+                            groupMode: true,
+                            groupUsers: null
+                        })
+
+                    }
+            }
+        })
+
+        setGroupText(id);
+    };
+
+    const partyModal = () => {
+
+        updateText(regMobile);
+
+        // shareModal();
+
+        // add user id to groups list
+
+        // setModalVisible(false);
     };
 
     const shareModal = () => {
@@ -559,7 +609,7 @@ const GPSMap = ({navigation}:Props) => {
 
                                         var mod = (i === regMobile) ? " (you)" : "";
     
-                                        addMarker(updateCount, snapshot.val()[i].latitude, snapshot.val()[i].longitude, i + mod, snapshot.val()[i].parkingLot, require('./person.png'));
+                                        addMarker(updateCount, snapshot.val()[i].latitude, snapshot.val()[i].longitude, i + mod, "Destination: " + snapshot.val()[i].parkingLot, require('./person.png'));
                                         
                                         updateCount++;
     
@@ -597,7 +647,7 @@ const GPSMap = ({navigation}:Props) => {
 
                         console.log(markerCount, "sharemod");
                         regMarkerId = markerCount;
-                        addMarker(markerCount, userCoordinates.latitude, userCoordinates.longitude, regMobile + " (you)", parkingCoordinates.name, require('./person.png'));
+                        addMarker(markerCount, userCoordinates.latitude, userCoordinates.longitude, regMobile + " (you)", "Destination: " + parkingCoordinates.name, require('./person.png'));
                     }
 
             } else {
@@ -648,6 +698,9 @@ const GPSMap = ({navigation}:Props) => {
                             </TouchableOpacity>
                             <TouchableOpacity style={styles.closeModalButton} onPress={shareModal}>
                                 <Text style={styles.closeModalText}>{shareButtonText}</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity style={styles.closeModalButton} onPress={partyModal}>
+                                <Text style={styles.closeModalText}>Party</Text>
                             </TouchableOpacity>
                             <TouchableOpacity style={styles.closeModalButton} onPress={closeModal}>
                                 <Text style={styles.closeModalText}>Close</Text>
@@ -976,6 +1029,9 @@ const GPSMap = ({navigation}:Props) => {
             
             {/* SIDE PANEL */}
             <View style={styles.DrawerContainer}>
+                <TouchableOpacity style={styles.HomeButton} onPress={handleToggleGroups}>
+                    <Image source={require('./groups.png')} style={styles.HomeIcon} resizeMode="contain" />
+                </TouchableOpacity>
                 <TouchableOpacity style={styles.toggleSidePanelButton} onPress={handleToggleSidePanel}>
                     <Image source={require('./DrawerLogo.png')} style={styles.DrawerIcon} resizeMode="contain" />
                 </TouchableOpacity>
@@ -1004,6 +1060,17 @@ const GPSMap = ({navigation}:Props) => {
                         </TouchableOpacity>
                         <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
                             <Text style={styles.panelText}>Logout</Text>
+                        </TouchableOpacity>
+                    </View>
+                </>
+            )}
+            {showGroupsPanel && (
+                <>
+                    <TouchableOpacity style={styles.overlay} onPress={handleCloseGroups} />
+                    <View style={styles.sidePanel}>
+                        <Text style={styles.sideHeader}>Groups</Text>
+                        <TouchableOpacity style={styles.FAQButton} onPress={handleFAQ}>
+                            <Text style={styles.panelText}>{groupText}</Text>
                         </TouchableOpacity>
                     </View>
                 </>
@@ -1167,7 +1234,7 @@ const styles = StyleSheet.create({
     DrawerContainer: {
         position: 'absolute',
         right: 20,
-        bottom: 20,
+        bottom: 80,
         height: 130,
         width: 65,
         flexDirection: 'column',
@@ -1219,6 +1286,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#213948',
         width: 200,
         padding: 3,
+        paddingTop: 20,
         borderRightColor: '#ccc',
     },
     sideHeader: {
