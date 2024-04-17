@@ -7,9 +7,9 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
 import { homeCoordinates } from '../AddressesForm/Addresses';
 import MapViewDirections from 'react-native-maps-directions';
-import { Linking } from 'react-native';
 import { getDatabase, ref, set, get, push, update, child } from "firebase/database";
 import { writeUserData } from '../App';
+import Clipboard from '@react-native-clipboard/clipboard';
 
 
 type RootStackParamList = {
@@ -36,7 +36,7 @@ var markerUpdated = false;
 
 const copyToClipboard = async (text) => {
     await Clipboard.setString(text);
-    alert('Link copied to clipboard');
+    Alert.alert('Link copied to clipboard');
   };
 
 const GPSMap = ({navigation}:Props) => {
@@ -537,16 +537,16 @@ const GPSMap = ({navigation}:Props) => {
         setGroupText(id);
     };
 
-    const partyModal = () => {
+    // const partyModal = () => {
 
-        updateText(regMobile);
+    //     updateText(regMobile);
 
-        // shareModal();
+    //     // shareModal();
 
-        // add user id to groups list
+    //     // add user id to groups list
 
-        // setModalVisible(false);
-    };
+    //     // setModalVisible(false);
+    // };
 
     const shareModal = () => {
 
@@ -661,20 +661,14 @@ const GPSMap = ({navigation}:Props) => {
 
     };
     const directionsModal = () => {
-        const link = "https://www.google.com/maps/dir/" + userCoordinates.latitude + "," + userCoordinates.longitude + "/" + parkingCoordinates.latitude + "," + parkingCoordinates.longitude;
-
-        // FOLLOWS THIS FORMAT: https://www.google.com/maps/dir/[lat,lon]/[lat,lon]
-        console.log(link);
-
-        openGoogleMapsDirections(userCoordinates.latitude, userCoordinates.longitude, parkingCoordinates.latitude, parkingCoordinates.longitude);
+        Alert.alert('User 85997634 has joined your party!');
     }
-    const openGoogleMapsDirections = (startLat, startLng, endLat, endLng) => {
-        const url = `https://www.google.com/maps/dir/?api=1&origin=${startLat},${startLng}&destination=${endLat},${endLng}`;
+    // const openGoogleMapsDirections = (startLat, startLng, endLat, endLng) => {
+    //     const url = `https://www.google.com/maps/dir/?api=1&origin=${startLat},${startLng}&destination=${endLat},${endLng}`;
       
-        Linking.openURL(url).catch((err) => console.error('An error occurred', err));
-    };
+    //     Linking.openURL(url).catch((err) => console.error('An error occurred', err));
+    // };
 
-    const [shareButtonText, setButtonText] = useState('Share');
 
     const ParkingLotDetails = ({ modalVisible, closeModal, parkingLot }: { modalVisible: boolean; closeModal: () => void; parkingLot: any }) => (
         <Modal
@@ -693,14 +687,11 @@ const GPSMap = ({navigation}:Props) => {
                             </View>
                         )}
                         <View style={styles.bottomContainer}>
-                            <TouchableOpacity style={styles.closeModalButton} onPress={directionsModal}>
-                                <Text style={styles.closeModalText}>Directions</Text>
-                            </TouchableOpacity>
                             <TouchableOpacity style={styles.closeModalButton} onPress={shareModal}>
-                                <Text style={styles.closeModalText}>{shareButtonText}</Text>
+                                <Text style={styles.closeModalText}>Share</Text>
                             </TouchableOpacity>
-                            <TouchableOpacity style={styles.closeModalButton} onPress={partyModal}>
-                                <Text style={styles.closeModalText}>Party</Text>
+                            <TouchableOpacity style={styles.closeModalButton} onPress={directionsModal}>
+                                <Text style={styles.closeModalText}>Party Notifications</Text>
                             </TouchableOpacity>
                             <TouchableOpacity style={styles.closeModalButton} onPress={closeModal}>
                                 <Text style={styles.closeModalText}>Close</Text>
@@ -717,6 +708,7 @@ const GPSMap = ({navigation}:Props) => {
     useEffect(() => {
         console.log('Destination bike coords updated to: ', destinationBikeCoordinates);
     }, [destinationBikeCoordinates]);
+    
     const displayLots = async (parkingCoords: { latitude: any; longitude: any; }) => {
         // Implementation logic for displaylot details
 
@@ -1068,10 +1060,9 @@ const GPSMap = ({navigation}:Props) => {
                 <>
                     <TouchableOpacity style={styles.overlay} onPress={handleCloseGroups} />
                     <View style={styles.sidePanel}>
-                        <Text style={styles.sideHeader}>Groups</Text>
-                        <TouchableOpacity style={styles.FAQButton} onPress={handleFAQ}>
-                            <Text style={styles.panelText}>{groupText}</Text>
-                        </TouchableOpacity>
+                        <Text style={styles.sideHeader}>Party</Text>
+                        <Text style={styles.panelText}>{regMobile}</Text>
+                        <Text style={styles.panelText}>85997634</Text>
                     </View>
                 </>
             )}
